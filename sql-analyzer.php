@@ -96,6 +96,9 @@ function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
 		return;
 	}
 
+	// LEGACY ASSETS - COMMENTED OUT FOR REACT MIGRATION
+	// Uncomment below if you need to revert to the PHP/vanilla JS version
+	/*
 	// Enqueue admin styles
 	wp_enqueue_style(
 		'sql-analyzer-admin',
@@ -116,8 +119,27 @@ function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
 			'strategy'  => 'defer',
 		)
 	);
+	*/
 
-	// Localize script with WordPress data
+	// Load React dashboard assets
+	$dashboard_asset = include( SQL_ANALYZER_DIR . 'build/dashboard.asset.php' );
+
+    wp_enqueue_script(
+        'sql-analyzer-dashboard',
+        SQL_ANALYZER_URL . 'build/dashboard.js',
+        $dashboard_asset['dependencies'],
+        $dashboard_asset['version'],
+        array( 'in_footer' => true )
+    );
+
+    wp_enqueue_style(
+        'sql-analyzer-dashboard-style',
+        SQL_ANALYZER_URL . 'build/dashboard.css',
+        array(),
+        $dashboard_asset['version']
+    );
+
+	// Localize script with WordPress data for React
 	$localized_data = array(
 		'restRoot'        => rest_url(),
 		'restNonce'       => wp_create_nonce( 'wp_rest' ),
@@ -137,8 +159,9 @@ function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
 		),
 	);
 
+	// Note: @wordpress/api-fetch automatically handles nonces with the wp_rest meta tag
 	wp_localize_script(
-		'sql-analyzer-admin',
+		'sql-analyzer-dashboard',
 		'sqlAnalyzerData',
 		$localized_data
 	);
