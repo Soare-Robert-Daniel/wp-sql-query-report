@@ -1,0 +1,30 @@
+{
+    "name": "robert/sql-analyzer",
+    "require": {
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Robert\\SqlAnalyzer\\": "includes/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Soare Robert-Daniel",
+            "email": "soare.robert.daniel@protonmail.com"
+        }
+    ],
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.0"
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse -c phpstan.neon",
+        "lint": "phpcs",
+        "lint:fix": "phpcbf"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

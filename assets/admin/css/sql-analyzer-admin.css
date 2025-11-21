@@ -1,0 +1,675 @@
+/**
+ * SQL Analyzer Admin Styles
+ *
+ * Provides professional styling for the SQL Analyzer admin interface.
+ * Follows WordPress admin design patterns and accessibility guidelines.
+ *
+ * @package Robert\SqlAnalyzer
+ * @author  Soare Robert-Daniel <soare.robert.daniel@protonmail.com>
+ * @license GPL-2.0-or-later
+ * @since   0.1.0
+ */
+
+/* ============================================================
+   Root Variables & Base Styles
+   ============================================================ */
+
+:root {
+    --sql-analyzer-primary: #2271b1;
+    --sql-analyzer-primary-hover: #135e96;
+    --sql-analyzer-secondary: #3f4854;
+    --sql-analyzer-border: #e5e5e5;
+    --sql-analyzer-bg-light: #fafbfc;
+    --sql-analyzer-text: #3f4854;
+    --sql-analyzer-text-light: #7a8490;
+    --sql-analyzer-success: #22a547;
+    --sql-analyzer-error: #d32f2f;
+    --sql-analyzer-warning: #ffb81c;
+    --sql-analyzer-code-bg: #f8f9fa;
+    --sql-analyzer-code-border: #e8eaed;
+    --sql-analyzer-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --sql-analyzer-shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+/* ============================================================
+   Main Container & Layout
+   ============================================================ */
+
+.sql-analyzer-wrap {
+    max-width: 1200px;
+    margin: 20px auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.sql-analyzer-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--sql-analyzer-border);
+}
+
+.sql-analyzer-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--sql-analyzer-secondary);
+}
+
+.sql-analyzer-title .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.sql-analyzer-description {
+    margin: 10px 0 0 0;
+    color: var(--sql-analyzer-text-light);
+    font-size: 14px;
+}
+
+.sql-analyzer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ============================================================
+   Section Styles
+   ============================================================ */
+
+.sql-analyzer-section {
+    background: #fff;
+    border: 1px solid var(--sql-analyzer-border);
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: var(--sql-analyzer-shadow);
+}
+
+.sql-analyzer-section-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--sql-analyzer-border);
+}
+
+.sql-analyzer-section-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--sql-analyzer-secondary);
+}
+
+.sql-analyzer-section-description {
+    margin: 8px 0 0 0;
+    font-size: 13px;
+    color: var(--sql-analyzer-text-light);
+}
+
+/* ============================================================
+   Form Styles
+   ============================================================ */
+
+.sql-analyzer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sql-analyzer-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sql-analyzer-label {
+    font-weight: 500;
+    color: var(--sql-analyzer-text);
+    font-size: 14px;
+}
+
+.sql-analyzer-query-input {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 12px;
+    border: 1px solid var(--sql-analyzer-border);
+    border-radius: 4px;
+    background-color: var(--sql-analyzer-code-bg);
+    color: var(--sql-analyzer-text);
+    resize: vertical;
+}
+
+.sql-analyzer-query-input:focus {
+    outline: 0;
+    border-color: var(--sql-analyzer-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 1px var(--sql-analyzer-primary);
+}
+
+.sql-analyzer-query-input::placeholder {
+    color: #999;
+}
+
+/* ============================================================
+   Form Options & Actions
+   ============================================================ */
+
+.sql-analyzer-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.sql-analyzer-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--sql-analyzer-text);
+}
+
+.sql-analyzer-checkbox-label input[type="checkbox"],
+#sql-analyzer-include-analyze {
+    cursor: pointer;
+    accent-color: var(--sql-analyzer-primary);
+}
+
+.sql-analyzer-checkbox-label span {
+    color: var(--sql-analyzer-text);
+}
+
+.sql-analyzer-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.sql-analyzer-submit-btn,
+.sql-analyzer-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.sql-analyzer-submit-btn {
+    background-color: var(--sql-analyzer-primary);
+    color: #fff;
+    border: 1px solid var(--sql-analyzer-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sql-analyzer-submit-btn:hover {
+    background-color: var(--sql-analyzer-primary-hover);
+    border-color: var(--sql-analyzer-primary-hover);
+}
+
+.sql-analyzer-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.sql-analyzer-btn-spinner {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: sql-analyzer-spin 0.6s linear infinite;
+}
+
+.sql-analyzer-submit-btn.is-loading .sql-analyzer-btn-spinner {
+    display: block;
+}
+
+.sql-analyzer-submit-btn.is-loading .sql-analyzer-btn-text {
+    display: none;
+}
+
+@keyframes sql-analyzer-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================
+   Alert Styles
+   ============================================================ */
+
+.sql-analyzer-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-left: 4px solid;
+    border-radius: 2px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.sql-analyzer-alert-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sql-analyzer-alert-content {
+    flex: 1;
+}
+
+.sql-analyzer-alert-content strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.sql-analyzer-alert-content p {
+    margin: 0;
+}
+
+.sql-analyzer-alert-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
+.sql-analyzer-alert-success {
+    background-color: #d4edda;
+    border-color: var(--sql-analyzer-success);
+    color: #155724;
+}
+
+.sql-analyzer-alert-error {
+    background-color: #f8d7da;
+    border-color: var(--sql-analyzer-error);
+    color: #721c24;
+}
+
+.sql-analyzer-hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   Results Section Styles
+   ============================================================ */
+
+.sql-analyzer-results-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sql-analyzer-result-card {
+    background: #fff;
+    border: 1px solid var(--sql-analyzer-border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: var(--sql-analyzer-shadow);
+}
+
+.sql-analyzer-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background-color: var(--sql-analyzer-bg-light);
+    border-bottom: 1px solid var(--sql-analyzer-border);
+}
+
+.sql-analyzer-result-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--sql-analyzer-secondary);
+}
+
+.sql-analyzer-result-title .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.sql-analyzer-result-body {
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.sql-analyzer-code-block {
+    margin: 0;
+    padding: 12px;
+    background-color: var(--sql-analyzer-code-bg);
+    border: 1px solid var(--sql-analyzer-code-border);
+    border-radius: 2px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--sql-analyzer-text);
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.sql-analyzer-llm-card {
+    background: linear-gradient(135deg, #f9f9f9 0%, #fff 100%);
+    border: 2px solid var(--sql-analyzer-primary);
+}
+
+.sql-analyzer-llm-output {
+    background-color: #fff;
+    min-height: 300px;
+}
+
+.sql-analyzer-llm-instructions {
+    padding: 12px 20px 0 20px;
+    background: none;
+}
+
+.sql-analyzer-llm-note {
+    margin: 0;
+    font-size: 13px;
+    color: var(--sql-analyzer-primary);
+    padding: 8px;
+    background-color: rgba(34, 113, 177, 0.05);
+    border-radius: 2px;
+    border-left: 3px solid var(--sql-analyzer-primary);
+    padding-left: 10px;
+}
+
+/* ============================================================
+   Copy Button Styles
+   ============================================================ */
+
+.sql-analyzer-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #fff;
+    border: 1px solid var(--sql-analyzer-border);
+    border-radius: 2px;
+    color: var(--sql-analyzer-text);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sql-analyzer-copy-btn:hover {
+    background-color: var(--sql-analyzer-bg-light);
+    border-color: var(--sql-analyzer-primary);
+    color: var(--sql-analyzer-primary);
+}
+
+.sql-analyzer-copy-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+.sql-analyzer-copy-btn.is-copied {
+    background-color: var(--sql-analyzer-success);
+    border-color: var(--sql-analyzer-success);
+    color: #fff;
+}
+
+/* ============================================================
+   Schema Display Styles
+   ============================================================ */
+
+.sql-analyzer-schema-display,
+.sql-analyzer-index-display {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sql-analyzer-table-info {
+    padding: 12px;
+    background-color: var(--sql-analyzer-code-bg);
+    border-left: 3px solid var(--sql-analyzer-primary);
+    border-radius: 2px;
+}
+
+.sql-analyzer-table-name {
+    font-weight: 600;
+    font-family: "Courier New", Courier, monospace;
+    color: var(--sql-analyzer-primary);
+    margin-bottom: 8px;
+}
+
+.sql-analyzer-column-list,
+.sql-analyzer-index-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+}
+
+.sql-analyzer-column-item,
+.sql-analyzer-index-item {
+    margin: 4px 0;
+    font-family: "Courier New", Courier, monospace;
+    color: var(--sql-analyzer-text);
+}
+
+.sql-analyzer-column-type {
+    color: #d32f2f;
+    font-weight: 500;
+}
+
+.sql-analyzer-column-constraint {
+    color: #f57c00;
+    font-size: 12px;
+}
+
+/* ============================================================
+   Toast Notification Styles
+   ============================================================ */
+
+.sql-analyzer-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    background-color: var(--sql-analyzer-text);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 13px;
+    box-shadow: var(--sql-analyzer-shadow-lg);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.sql-analyzer-toast.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ============================================================
+   Responsive Design
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .sql-analyzer-wrap {
+        margin: 10px;
+    }
+
+    .sql-analyzer-section {
+        padding: 16px;
+    }
+
+    .sql-analyzer-result-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .sql-analyzer-form-actions {
+        flex-direction: column;
+    }
+
+    .sql-analyzer-submit-btn,
+    .sql-analyzer-clear-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sql-analyzer-code-block {
+        font-size: 11px;
+    }
+
+    .sql-analyzer-toast {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .sql-analyzer-title {
+        font-size: 22px;
+    }
+}
+
+/* ============================================================
+   Dark Mode Support
+   ============================================================ */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --sql-analyzer-bg-light: #1a1a1a;
+        --sql-analyzer-code-bg: #0d0d0d;
+        --sql-analyzer-text: #f5f5f5;
+        --sql-analyzer-text-light: #d0d0d0;
+        --sql-analyzer-border: #404040;
+    }
+
+    .sql-analyzer-section,
+    .sql-analyzer-result-card {
+        background: #1a1a1a;
+        border-color: #404040;
+    }
+
+    .sql-analyzer-result-header {
+        background-color: #0d0d0d;
+        border-bottom-color: #404040;
+    }
+
+    .sql-analyzer-code-block {
+        background-color: #0d0d0d;
+        border-color: #404040;
+        color: #f5f5f5;
+    }
+
+    .sql-analyzer-query-input {
+        background-color: #0d0d0d;
+        border-color: #404040;
+        color: #f5f5f5;
+    }
+
+    .sql-analyzer-query-input:focus {
+        border-color: var(--sql-analyzer-primary);
+        background-color: #1a1a1a;
+        box-shadow: 0 0 0 1px var(--sql-analyzer-primary);
+    }
+
+    .sql-analyzer-query-input::placeholder {
+        color: #888;
+    }
+
+    .sql-analyzer-copy-btn {
+        background-color: #1a1a1a;
+        border-color: #404040;
+        color: #f5f5f5;
+    }
+
+    .sql-analyzer-copy-btn:hover {
+        background-color: #262626;
+        border-color: #505050;
+    }
+
+    /* Checkbox label styling for dark mode */
+    .sql-analyzer-checkbox-label {
+        color: #d0d0d0;
+    }
+
+    .sql-analyzer-checkbox-label input[type="checkbox"],
+    #sql-analyzer-include-analyze {
+        background-color: #0d0d0d;
+        border-color: #404040;
+        accent-color: var(--sql-analyzer-primary);
+    }
+
+    .sql-analyzer-checkbox-label input[type="checkbox"]:checked,
+    #sql-analyzer-include-analyze:checked {
+        background-color: var(--sql-analyzer-primary);
+        border-color: var(--sql-analyzer-primary);
+    }
+
+    /* Title and heading colors for dark mode */
+    .sql-analyzer-title {
+        color: #f5f5f5;
+    }
+
+    .sql-analyzer-result-title {
+        color: #f5f5f5;
+    }
+
+    .sql-analyzer-label {
+        color: #d0d0d0;
+    }
+
+    .sql-analyzer-section-description,
+    .sql-analyzer-description {
+        color: #b0b0b0;
+    }
+
+    /* Alert styling for dark mode */
+    .sql-analyzer-alert {
+        background-color: #1a1a1a;
+        border-color: #404040;
+        color: #f5f5f5;
+    }
+
+    .sql-analyzer-alert-error {
+        background-color: rgba(211, 47, 47, 0.15);
+        border-color: rgba(211, 47, 47, 0.4);
+    }
+
+    .sql-analyzer-alert-success {
+        background-color: rgba(34, 165, 71, 0.15);
+        border-color: rgba(34, 165, 71, 0.4);
+    }
+}
+
+/* ============================================================
+   Print Styles
+   ============================================================ */
+
+@media print {
+    .sql-analyzer-form-actions,
+    .sql-analyzer-copy-btn {
+        display: none;
+    }
+
+    .sql-analyzer-result-body {
+        page-break-inside: avoid;
+    }
+}
