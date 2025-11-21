@@ -1,28 +1,47 @@
+import { QueryInput as QueryInputType } from '../types';
+import { QueryInput } from './QueryInput';
+
 interface QueryFormProps {
-  query: string;
+  queries: QueryInputType[];
   includeAnalyze: boolean;
   loading: boolean;
-  onQueryChange: (query: string) => void;
+  onQueriesChange: (queries: QueryInputType[]) => void;
   onAnalyzeChange: (include: boolean) => void;
   onSubmit: () => void;
   onClear: () => void;
 }
 
 export function QueryForm({
-  query,
+  queries,
   includeAnalyze,
   loading,
-  onQueryChange,
+  onQueriesChange,
   onAnalyzeChange,
   onSubmit,
   onClear,
 }: QueryFormProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Ctrl+Enter or Cmd+Enter to submit
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      onSubmit();
-    }
+  const handleAddQuery = () => {
+    const newQuery: QueryInputType = {
+      id: Date.now().toString(),
+      label: '',
+      query: '',
+    };
+    onQueriesChange([...queries, newQuery]);
   };
+
+  const handleRemoveQuery = (id: string) => {
+    onQueriesChange(queries.filter((q) => q.id !== id));
+  };
+
+  const handleUpdateQuery = (id: string, field: 'label' | 'query', value: string) => {
+    onQueriesChange(
+      queries.map((q) =>
+        q.id === id ? { ...q, [field]: value } : q
+      )
+    );
+  };
+
+  const hasValidQueries = queries.some((q) => q.query.trim());
 
   return (
     <form
@@ -30,53 +49,67 @@ export function QueryForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm"
+      className="space-y-4"
     >
-      <div className="mb-4">
-        <label htmlFor="sql-query" className="block text-sm font-medium text-gray-700 mb-2">
-          SQL Query
-        </label>
-        <textarea
-          id="sql-query"
-          value={query}
-          onChange={(e) => onQueryChange(e.currentTarget.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Enter your SQL query here... (Ctrl+Enter to submit)"
-          className="w-full h-40 px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          disabled={loading}
-        />
+      {/* Queries List */}
+      <div className="space-y-3">
+        {queries.map((query, index) => (
+          <QueryInput
+            key={query.id}
+            query={query}
+            index={index}
+            totalQueries={queries.length}
+            onLabelChange={(value) => handleUpdateQuery(query.id, 'label', value)}
+            onQueryChange={(value) => handleUpdateQuery(query.id, 'query', value)}
+            onRemove={() => handleRemoveQuery(query.id)}
+          />
+        ))}
       </div>
 
-      <div className="mb-4 flex items-center">
-        <input
-          id="include-analyze"
-          type="checkbox"
-          checked={includeAnalyze}
-          onChange={(e) => onAnalyzeChange(e.currentTarget.checked)}
-          disabled={loading}
-          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-        />
-        <label htmlFor="include-analyze" className="ml-2 text-sm text-gray-700 cursor-pointer">
-          Include ANALYZE results
-        </label>
-      </div>
+      {/* Add Query Button */}
+      <button
+        type="button"
+        onClick={handleAddQuery}
+        disabled={loading}
+        className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        + Add Another Query
+      </button>
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading || !query.trim()}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          {loading ? 'Analyzing...' : 'Analyze Query'}
-        </button>
-        <button
-          type="button"
-          onClick={onClear}
-          disabled={loading || !query.trim()}
-          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-        >
-          Clear
-        </button>
+      {/* Options */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center mb-4">
+          <input
+            id="include-analyze"
+            type="checkbox"
+            checked={includeAnalyze}
+            onChange={(e) => onAnalyzeChange(e.currentTarget.checked)}
+            disabled={loading}
+            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          />
+          <label htmlFor="include-analyze" className="ml-2 text-sm text-gray-700 cursor-pointer">
+            Include ANALYZE results for all queries
+          </label>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={loading || !hasValidQueries}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {loading ? `Analyzing ${queries.length} Queries...` : `Analyze All Queries (${queries.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={loading || !hasValidQueries}
+            className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            Clear All
+          </button>
+        </div>
       </div>
     </form>
   );

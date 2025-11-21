@@ -96,48 +96,23 @@ function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
 		return;
 	}
 
-	// LEGACY ASSETS - COMMENTED OUT FOR REACT MIGRATION
-	// Uncomment below if you need to revert to the PHP/vanilla JS version
-	/*
-	// Enqueue admin styles
-	wp_enqueue_style(
-		'sql-analyzer-admin',
-		SQL_ANALYZER_URL . 'assets/admin/css/sql-analyzer-admin.css',
-		array(),
-		SQL_ANALYZER_VERSION,
-		'all'
-	);
-
-	// Enqueue admin scripts
-	wp_enqueue_script(
-		'sql-analyzer-admin',
-		SQL_ANALYZER_URL . 'assets/admin/js/sql-analyzer-admin.js',
-		array(),
-		SQL_ANALYZER_VERSION,
-		array(
-			'in_footer' => true,
-			'strategy'  => 'defer',
-		)
-	);
-	*/
-
 	// Load React dashboard assets
-	$dashboard_asset = include( SQL_ANALYZER_DIR . 'build/dashboard.asset.php' );
+	$dashboard_asset = include SQL_ANALYZER_DIR . 'build/dashboard.asset.php';
 
-    wp_enqueue_script(
-        'sql-analyzer-dashboard',
-        SQL_ANALYZER_URL . 'build/dashboard.js',
-        $dashboard_asset['dependencies'],
-        $dashboard_asset['version'],
-        array( 'in_footer' => true )
-    );
+	wp_enqueue_script(
+		'sql-analyzer-dashboard',
+		SQL_ANALYZER_URL . 'build/dashboard.js',
+		$dashboard_asset['dependencies'],
+		$dashboard_asset['version'],
+		array( 'in_footer' => true )
+	);
 
-    wp_enqueue_style(
-        'sql-analyzer-dashboard-style',
-        SQL_ANALYZER_URL . 'build/dashboard.css',
-        array(),
-        $dashboard_asset['version']
-    );
+	wp_enqueue_style(
+		'sql-analyzer-dashboard-style',
+		SQL_ANALYZER_URL . 'build/dashboard.css',
+		array(),
+		$dashboard_asset['version']
+	);
 
 	// Localize script with WordPress data for React
 	$localized_data = array(
@@ -185,13 +160,18 @@ function sql_analyzer_register_rest_endpoint(): void {
 				return current_user_can( 'manage_options' );
 			},
 			'args'                => array(
-				'query'           => array(
-					'type'              => 'string',
-					'required'          => true,
-					'sanitize_callback' => function ( $value ) {
-						return trim( (string) $value );
-					},
-					'description'       => 'The SQL query to analyze',
+				'queries'         => array(
+					'type'        => 'array',
+					'items'       => array(
+						'type'       => 'object',
+						'properties' => array(
+							'id'    => array( 'type' => 'string' ),
+							'label' => array( 'type' => 'string' ),
+							'query' => array( 'type' => 'string' ),
+						),
+					),
+					'required'    => true,
+					'description' => 'Array of SQL queries to analyze',
 				),
 				'include_analyze' => array(
 					'type'        => 'boolean',
@@ -227,40 +207,35 @@ function sql_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Resp
 		}
 
 		// Get parameters
-		$query           = $request->get_param( 'query' );
+		$queries         = $request->get_param( 'queries' );
 		$include_analyze = (bool) $request->get_param( 'include_analyze' );
 
-		// Validate query input
-		if ( empty( $query ) ) {
+		// Validate queries input
+		if ( empty( $queries ) || ! is_array( $queries ) ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'Query cannot be empty', 'sql-analyzer' ),
+					'message' => __( 'At least one query is required', 'sql-analyzer' ),
 				),
 				400
 			);
 		}
 
-		// Validate query is safe for analysis
-		if ( ! sql_analyzer_validate_query( $query ) ) {
-			return new \WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => __( 'This query type cannot be analyzed. Only SELECT queries are allowed.', 'sql-analyzer' ),
-				),
-				400
-			);
-		}
-
-		// Analyze the query
-		$analysis = sql_analyzer_analyze_query( $query, $include_analyze );
+		// Analyze all queries
+		$results = sql_analyzer_analyze_queries( $queries, $include_analyze );
 
 		// Return success response
 		return new \WP_REST_Response(
 			array(
-				'success' => true,
-				'message' => __( 'Query analyzed successfully.', 'sql-analyzer' ),
-				'data'    => $analysis,
+				'success'         => true,
+				'message'         => sprintf(
+					/* translators: %d = number of queries */
+					__( 'Analyzed %d queries successfully.', 'sql-analyzer' ),
+					count( $results['queries'] )
+				),
+				'queries'         => $results['queries'],
+				'summary'         => $results['summary'],
+				'complete_output' => $results['complete_output'],
 			),
 			200
 		);
@@ -373,6 +348,109 @@ function sql_analyzer_extract_table_names( string $query ): array {
 }
 
 /**
+ * Analyze multiple SQL queries
+ *
+ * Processes an array of queries and returns aggregated results.
+ *
+ * @param array $query_inputs Array of query objects with id, label, query.
+ * @param bool  $include_analyze Whether to include ANALYZE results.
+ * @return array Array containing queries, summary, and complete_output.
+ * @throws \Exception If analysis fails.
+ */
+function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyze = false ): array {
+	$results       = array();
+	$total_cost    = 0;
+	$total_time    = 0;
+	$slowest_index = null;
+	$slowest_time  = 0;
+	$has_warnings  = false;
+
+	foreach ( $query_inputs as $index => $input ) {
+		// Validate query is safe for analysis
+		if ( ! sql_analyzer_validate_query( $input['query'] ) ) {
+			$results[] = array(
+				'id'      => $input['id'],
+				'label'   => $input['label'],
+				'query'   => $input['query'],
+				'error'   => __( 'Only SELECT queries are allowed', 'sql-analyzer' ),
+				'tables'  => array(),
+				'indexes' => array(),
+				'explain' => array(),
+				'analyze' => array(),
+			);
+			continue;
+		}
+
+		$start_time = microtime( true );
+
+		try {
+			// Analyze this query
+			$query_result   = sql_analyzer_analyze_query( $input['query'], $include_analyze );
+			$execution_time = microtime( true ) - $start_time;
+
+			$query_result['id']             = $input['id'];
+			$query_result['label']          = $input['label'];
+			$query_result['query']          = $input['query'];
+			$query_result['execution_time'] = $execution_time;
+			$query_result['error']          = null;
+
+			// Calculate total cost (approximation from first explain line)
+			if ( ! empty( $query_result['explain'] ) ) {
+				$explain_text = $query_result['explain'][0]['EXPLAIN'] ?? '';
+				if ( preg_match( '/cost=([0-9.e+]+)/', $explain_text, $matches ) ) {
+					$query_cost  = floatval( $matches[1] );
+					$total_cost += $query_cost;
+				}
+			}
+
+			$total_time += $execution_time;
+
+			// Track slowest query
+			if ( $execution_time > $slowest_time ) {
+				$slowest_time  = $execution_time;
+				$slowest_index = $index;
+			}
+
+			// Check for warnings
+			if ( ! empty( $query_result['explain'] ) ) {
+				$explain_text = strtoupper( $query_result['explain'][0]['EXPLAIN'] ?? '' );
+				if ( strpos( $explain_text, 'TABLE SCAN' ) !== false ) {
+					$has_warnings = true;
+				}
+			}
+
+			$results[] = $query_result;
+		} catch ( \Exception $e ) {
+			$results[] = array(
+				'id'      => $input['id'],
+				'label'   => $input['label'],
+				'query'   => $input['query'],
+				'error'   => $e->getMessage(),
+				'tables'  => array(),
+				'indexes' => array(),
+				'explain' => array(),
+				'analyze' => array(),
+			);
+		}
+	}
+
+	// Prepare complete output for LLM
+	$complete_output = sql_analyzer_format_multi_query_output( $results );
+
+	return array(
+		'queries'         => $results,
+		'summary'         => array(
+			'total_queries'        => count( $results ),
+			'total_execution_time' => $total_time,
+			'total_cost'           => (int) $total_cost,
+			'slowest_query_index'  => $slowest_index,
+			'has_warnings'         => $has_warnings,
+		),
+		'complete_output' => $complete_output,
+	);
+}
+
+/**
  * Analyze SQL query
  *
  * Executes EXPLAIN/ANALYZE and gathers database information.
@@ -478,6 +556,266 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 }
 
 /**
+ * Format table columns with aligned padding
+ *
+ * @param array $columns Array of column data.
+ * @return string Formatted columns with aligned padding.
+ */
+function sql_analyzer_format_table_columns( array $columns ): string {
+	if ( empty( $columns ) ) {
+		return '';
+	}
+
+	// Pass 1: Calculate maximum widths
+	$max_name_width = 0;
+	$max_type_width = 0;
+	$max_null_width = 0;
+
+	foreach ( $columns as $col ) {
+		$max_name_width = max( $max_name_width, strlen( $col['name'] ) );
+		$max_type_width = max( $max_type_width, strlen( $col['type'] ) );
+		$null_text      = $col['null'] ? 'NULL' : 'NOT NULL';
+		$max_null_width = max( $max_null_width, strlen( $null_text ) );
+	}
+
+	$spacing = 4;
+	$output  = '';
+
+	// Pass 2: Format with padding
+	foreach ( $columns as $col ) {
+		$null_text = $col['null'] ? 'NULL' : 'NOT NULL';
+		$key_text  = $col['key'] ? 'KEY: ' . $col['key'] : '';
+
+		$line = '  ' .
+			str_pad( $col['name'], $max_name_width, ' ', STR_PAD_RIGHT ) .
+			str_repeat( ' ', $spacing ) .
+			str_pad( $col['type'], $max_type_width, ' ', STR_PAD_RIGHT ) .
+			str_repeat( ' ', $spacing ) .
+			str_pad( $null_text, $max_null_width, ' ', STR_PAD_RIGHT );
+
+		if ( $key_text ) {
+			$line .= str_repeat( ' ', $spacing ) . $key_text;
+		}
+
+		$output .= $line . "\n";
+	}
+
+	return $output;
+}
+
+/**
+ * Format indexes with aligned padding
+ *
+ * @param array $indexes Array of index data.
+ * @return string Formatted indexes with aligned padding.
+ */
+function sql_analyzer_format_indexes( array $indexes ): string {
+	if ( empty( $indexes ) ) {
+		return '';
+	}
+
+	// Pass 1: Calculate maximum widths
+	$max_name_width   = 0;
+	$max_type_width   = 0;
+	$max_column_width = 0;
+
+	foreach ( $indexes as $idx ) {
+		$max_name_width   = max( $max_name_width, strlen( $idx['name'] ) );
+		$type_text        = '(' . $idx['type'] . ')';
+		$max_type_width   = max( $max_type_width, strlen( $type_text ) );
+		$max_column_width = max( $max_column_width, strlen( $idx['column'] ) );
+	}
+
+	$spacing = 4;
+	$output  = '';
+
+	// Pass 2: Format with padding
+	foreach ( $indexes as $idx ) {
+		$type_text   = '(' . $idx['type'] . ')';
+		$unique_text = $idx['unique'] ? 'UNIQUE' : '';
+
+		$line = '  ' .
+			str_pad( $idx['name'], $max_name_width, ' ', STR_PAD_RIGHT ) .
+			str_repeat( ' ', $spacing ) .
+			str_pad( $type_text, $max_type_width, ' ', STR_PAD_RIGHT ) .
+			str_repeat( ' ', $spacing ) .
+			str_pad( $idx['column'], $max_column_width, ' ', STR_PAD_RIGHT );
+
+		if ( $unique_text ) {
+			$line .= str_repeat( ' ', $spacing ) . $unique_text;
+		}
+
+		$output .= $line . "\n";
+	}
+
+	return $output;
+}
+
+/**
+ * Format multi-query output for LLM integration
+ *
+ * Creates a comprehensive report for multiple queries.
+ *
+ * @param array $query_results Array of query result objects.
+ * @return string Formatted output for LLM export.
+ */
+function sql_analyzer_format_multi_query_output( array $query_results ): string {
+	$output = '';
+
+	// Header
+	$output .= str_repeat( '=', 80 ) . "\n";
+	$output .= "SQL QUERY ANALYSIS REPORT - MULTI-QUERY SESSION\n";
+	$output .= str_repeat( '=', 80 ) . "\n";
+	$output .= 'Generated: ' . current_time( 'mysql' ) . "\n";
+	$output .= 'Number of Queries: ' . count( $query_results ) . "\n";
+
+	// Environment Information
+	global $wpdb;
+	$db_version = $wpdb->db_version();
+	$db_type    = ( strpos( $db_version, 'MariaDB' ) !== false ) ? 'MariaDB' : 'MySQL';
+
+	$output .= 'WordPress Version: ' . get_bloginfo( 'version' ) . "\n";
+	$output .= 'PHP Version: ' . phpversion() . "\n";
+	$output .= 'Database Type: ' . $db_type . "\n";
+	$output .= 'Database Version: ' . $db_version . "\n";
+	$output .= "\n";
+
+	// Executive Summary
+	$total_cost    = 0;
+	$total_time    = 0;
+	$slowest_index = null;
+	$slowest_time  = 0;
+
+	foreach ( $query_results as $index => $result ) {
+		$execution_time = $result['execution_time'] ?? 0;
+		$total_time    += $execution_time;
+
+		if ( ! empty( $result['explain'] ) ) {
+			$explain_text = $result['explain'][0]['EXPLAIN'] ?? '';
+			if ( preg_match( '/cost=([0-9.e+]+)/', $explain_text, $matches ) ) {
+				$total_cost += floatval( $matches[1] );
+			}
+		}
+
+		if ( $execution_time > $slowest_time ) {
+			$slowest_time  = $execution_time;
+			$slowest_index = $index;
+		}
+	}
+
+	$output .= str_repeat( '=', 80 ) . "\n";
+	$output .= "EXECUTIVE SUMMARY\n";
+	$output .= str_repeat( '=', 80 ) . "\n";
+	$output .= 'Total Execution Time: ' . number_format( $total_time, 3 ) . "s\n";
+	$output .= 'Total Estimated Cost: ' . number_format( (int) $total_cost, 0 ) . " (relative units)\n";
+
+	if ( $slowest_index !== null ) {
+		$slowest = $query_results[ $slowest_index ];
+		$output .= 'Slowest Query: ' . $slowest['label'] . ' (' . number_format( $slowest_time, 3 ) . "s)\n";
+	}
+
+	$output .= "\n";
+
+	// Individual query results
+	foreach ( $query_results as $index => $result ) {
+		$output .= str_repeat( '=', 80 ) . "\n";
+		$output .= 'QUERY ' . ( $index + 1 ) . ': ' . $result['label'] . "\n";
+		$output .= str_repeat( '=', 80 ) . "\n";
+
+		if ( ! empty( $result['error'] ) ) {
+			$output .= 'ERROR: ' . $result['error'] . "\n\n";
+			continue;
+		}
+
+		$execution_time = $result['execution_time'] ?? 0;
+		$output        .= 'Execution Time: ' . number_format( $execution_time, 3 ) . "s\n\n";
+
+		// Original query
+		$output .= str_repeat( '-', 80 ) . "\n";
+		$output .= "ORIGINAL QUERY:\n";
+		$output .= str_repeat( '-', 80 ) . "\n";
+		$output .= $result['query'] . "\n\n";
+
+		// Query type
+		$query_type = sql_analyzer_get_query_type( $result['query'] );
+		$output    .= 'Query Type: ' . $query_type . "\n\n";
+
+		// Execution plans
+		if ( ! empty( $result['analyze'] ) ) {
+			$output .= str_repeat( '-', 80 ) . "\n";
+			$output .= "EXECUTION PLAN (ACTUAL - ANALYZE):\n";
+			$output .= str_repeat( '-', 80 ) . "\n";
+			$output .= $result['analyze'][0]['EXPLAIN'] . "\n\n";
+		}
+
+		if ( ! empty( $result['explain'] ) ) {
+			$output .= str_repeat( '-', 80 ) . "\n";
+			$output .= "EXECUTION PLAN (ESTIMATED - EXPLAIN):\n";
+			$output .= str_repeat( '-', 80 ) . "\n";
+			$output .= $result['explain'][0]['EXPLAIN'] . "\n\n";
+		}
+
+		// Table structures
+		if ( ! empty( $result['tables'] ) ) {
+			$output .= str_repeat( '-', 80 ) . "\n";
+			$output .= "TABLE STRUCTURES:\n";
+			$output .= str_repeat( '-', 80 ) . "\n";
+
+			foreach ( $result['tables'] as $table ) {
+				$output .= "\nTable: " . $table['name'] . "\n";
+				$output .= str_repeat( '-', 40 ) . "\n";
+				$output .= sql_analyzer_format_table_columns( $table['columns'] );
+			}
+			$output .= "\n";
+		}
+
+		// Indexes
+		if ( ! empty( $result['indexes'] ) ) {
+			$output .= str_repeat( '-', 80 ) . "\n";
+			$output .= "INDEXES:\n";
+			$output .= str_repeat( '-', 80 ) . "\n";
+
+			foreach ( $result['indexes'] as $table_name => $indexes ) {
+				$output .= "\nTable: " . $table_name . "\n";
+				$output .= sql_analyzer_format_indexes( $indexes );
+			}
+			$output .= "\n";
+		}
+	}
+
+	$output .= str_repeat( '=', 80 ) . "\n";
+	$output .= "END OF MULTI-QUERY REPORT\n";
+	$output .= str_repeat( '=', 80 ) . "\n";
+
+	return $output;
+}
+
+/**
+ * Get query type
+ *
+ * Determines the type of SQL query.
+ *
+ * @param string $query The SQL query.
+ * @return string The query type (SELECT, INSERT, UPDATE, DELETE, etc.).
+ */
+function sql_analyzer_get_query_type( string $query ): string {
+	$upper = strtoupper( trim( $query ) );
+	$upper = preg_replace( '/^(\/\*.*?\*\/)*/s', '', $upper );
+
+	if ( preg_match( '/^SELECT\s+/i', $upper ) ) {
+		return 'SELECT';
+	} elseif ( preg_match( '/^INSERT\s+/i', $upper ) ) {
+		return 'INSERT';
+	} elseif ( preg_match( '/^UPDATE\s+/i', $upper ) ) {
+		return 'UPDATE';
+	} elseif ( preg_match( '/^DELETE\s+/i', $upper ) ) {
+		return 'DELETE';
+	}
+
+	return 'UNKNOWN';
+}
+
+/**
  * Format output for LLM integration
  *
  * Creates a comprehensive, well-formatted analysis report.
@@ -498,7 +836,17 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 	$output .= "SQL QUERY ANALYSIS REPORT\n";
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= 'Generated: ' . current_time( 'mysql' ) . "\n";
-	$output .= 'Include ANALYZE: ' . ( $include_analyze ? 'Yes' : 'No' ) . "\n\n";
+	$output .= 'Include ANALYZE: ' . ( $include_analyze ? 'Yes' : 'No' ) . "\n";
+	// Environment Information
+	global $wpdb;
+	$db_version = $wpdb->db_version();
+	$db_type    = ( strpos( $db_version, 'MariaDB' ) !== false ) ? 'MariaDB' : 'MySQL';
+
+	$output .= 'WordPress Version: ' . get_bloginfo( 'version' ) . "\n";
+	$output .= 'PHP Version: ' . phpversion() . "\n";
+	$output .= 'Database Type: ' . $db_type . "\n";
+	$output .= 'Database Version: ' . $db_version . "\n";
+	$output .= "\n";
 
 	// Original Query
 	$output .= str_repeat( '-', 80 ) . "\n";
