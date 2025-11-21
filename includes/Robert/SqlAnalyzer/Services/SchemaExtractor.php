@@ -44,7 +44,7 @@ final class SchemaExtractor {
 			throw new \Exception(
 				sprintf(
 					'Table does not exist: %s',
-					$table_name
+					esc_attr( $table_name )
 				)
 			);
 		}
@@ -69,15 +69,16 @@ final class SchemaExtractor {
 	public static function getColumnInfo( string $table_name ): array {
 		$wpdb = DatabaseService::getConnection();
 
-		// Prepare query to get column info
-		$query = $wpdb->prepare(
-			'SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION',
-			DatabaseService::getDatabaseName(),
-			$table_name
+		// Execute query with prepared statement
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$columns = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION',
+				DatabaseService::getDatabaseName(),
+				sanitize_key( $table_name )
+			),
+			ARRAY_A
 		);
-
-		// Execute query
-		$columns = $wpdb->get_results( $query, ARRAY_A );
 
 		if ( null === $columns ) {
 			$columns = array();
@@ -139,14 +140,16 @@ final class SchemaExtractor {
 	public static function getTableMetadata( string $table_name ): array {
 		$wpdb = DatabaseService::getConnection();
 
-		// Get table metadata from information schema
-		$query = $wpdb->prepare(
-			'SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
-			DatabaseService::getDatabaseName(),
-			$table_name
+		// Get table metadata from information schema with prepared statement
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$metadata = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+				DatabaseService::getDatabaseName(),
+				sanitize_key( $table_name )
+			),
+			ARRAY_A
 		);
-
-		$metadata = $wpdb->get_row( $query, ARRAY_A );
 
 		if ( null === $metadata ) {
 			return array();

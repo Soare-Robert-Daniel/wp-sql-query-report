@@ -126,11 +126,11 @@ final class Security {
 	 * Escapes a string for safe display in HTML context.
 	 *
 	 * @since 0.1.0
-	 * @param string $string The string to escape
+	 * @param string $text The string to escape
 	 * @return string Escaped string
 	 */
-	public static function escapeForDisplay( string $string ): string {
-		return htmlspecialchars( $string, ENT_QUOTES, 'UTF-8' );
+	public static function escapeForDisplay( string $text ): string {
+		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 	}
 
 	/**
@@ -175,11 +175,14 @@ final class Security {
 
 		// Add context if provided
 		if ( ! empty( $context ) ) {
-			$message .= ' | ' . json_encode( $context );
+			$message .= ' | ' . wp_json_encode( $context );
 		}
 
 		// Log to error log
-		error_log( $message );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( $message );
+		}
 	}
 
 	/**
@@ -238,7 +241,7 @@ final class Security {
 	 * Verifies the WordPress REST nonce sent from the frontend.
 	 *
 	 * @since 0.1.0
-	 * @param \WP_REST_Request $request The REST request object
+	 * @param \WP_REST_Request<array<string, mixed>> $request The REST request object
 	 * @return bool True if nonce is valid
 	 */
 	public static function checkRestNonce( \WP_REST_Request $request ): bool {

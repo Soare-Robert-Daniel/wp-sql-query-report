@@ -36,6 +36,7 @@ final class FormattedOutput {
 	 * @param array<int, array<string, mixed>>                $tables Table structures
 	 * @param array<string, array<int, array<string, mixed>>> $indexes Index information
 	 * @param array<int, array<string, mixed>>                $analyze ANALYZE results (optional)
+	 * @param bool                                            $include_analyze Whether ANALYZE was requested
 	 * @return string Formatted output for LLM
 	 */
 	public static function createLLMFriendlyOutput(
@@ -43,7 +44,8 @@ final class FormattedOutput {
 		array $explain,
 		array $tables,
 		array $indexes,
-		array $analyze = array()
+		array $analyze = array(),
+		bool $include_analyze = false
 	): string {
 		$output = '';
 
@@ -52,6 +54,7 @@ final class FormattedOutput {
 		$output .= "SQL QUERY ANALYSIS REPORT\n";
 		$output .= str_repeat( '=', 80 ) . "\n";
 		$output .= 'Generated: ' . current_time( 'mysql' ) . "\n";
+		$output .= 'Include ANALYZE: ' . ( $include_analyze ? 'Yes' : 'No' ) . "\n";
 		$output .= "\n";
 
 		// Original Query Section
@@ -73,12 +76,16 @@ final class FormattedOutput {
 		$output .= self::formatExplainOutput( $explain );
 		$output .= "\n";
 
-		// ANALYZE Output Section (if available)
-		if ( ! empty( $analyze ) ) {
+		// ANALYZE Output Section
+		if ( $include_analyze ) {
 			$output .= str_repeat( '-', 80 ) . "\n";
 			$output .= "QUERY EXECUTION ANALYSIS (ANALYZE):\n";
 			$output .= str_repeat( '-', 80 ) . "\n";
-			$output .= self::formatAnalyzeOutput( $analyze );
+			if ( ! empty( $analyze ) ) {
+				$output .= self::formatAnalyzeOutput( $analyze );
+			} else {
+				$output .= "No ANALYZE data available. This may occur if the query does not produce execution statistics.\n";
+			}
 			$output .= "\n";
 		}
 
@@ -120,6 +127,7 @@ final class FormattedOutput {
 	 * Format EXPLAIN output
 	 *
 	 * Formats EXPLAIN query results into readable text.
+	 * Handles both FORMAT=TREE (single row with tree string) and traditional EXPLAIN formats.
 	 *
 	 * @since 0.1.0
 	 * @param array<int, array<string, mixed>> $explain_data EXPLAIN results
@@ -132,15 +140,26 @@ final class FormattedOutput {
 
 		$output = '';
 
-		foreach ( $explain_data as $index => $row ) {
-			$output .= sprintf( "Row %d:\n", $index + 1 );
+		// Check if this is EXPLAIN FORMAT=TREE output (single column, tree format)
+		if ( 1 === count( $explain_data ) && 1 === count( reset( $explain_data ) ) ) {
+			// Get the first (and only) value from the first row
+			$first_row  = reset( $explain_data );
+			$tree_value = reset( $first_row );
 
-			foreach ( $row as $key => $value ) {
-				$formatted_value = self::formatValue( $value );
-				$output         .= sprintf( "  %-20s: %s\n", $key, $formatted_value );
+			// Output the tree directly as it's already formatted
+			$output .= (string) $tree_value . "\n";
+		} else {
+			// Traditional EXPLAIN format with multiple columns/rows
+			foreach ( $explain_data as $index => $row ) {
+				$output .= sprintf( "Row %d:\n", $index + 1 );
+
+				foreach ( $row as $key => $value ) {
+					$formatted_value = self::formatValue( $value );
+					$output         .= sprintf( "  %-20s: %s\n", $key, $formatted_value );
+				}
+
+				$output .= "\n";
 			}
-
-			$output .= "\n";
 		}
 
 		return $output;
@@ -149,7 +168,8 @@ final class FormattedOutput {
 	/**
 	 * Format ANALYZE output
 	 *
-	 * Formats ANALYZE query results into readable text.
+	 * Formats ANALYZE query results (EXPLAIN FORMAT=JSON) into readable text.
+	 * Handles JSON format and traditional multi-column formats.
 	 *
 	 * @since 0.1.0
 	 * @param array<int, array<string, mixed>> $analyze_data ANALYZE results
@@ -162,15 +182,102 @@ final class FormattedOutput {
 
 		$output = '';
 
-		foreach ( $analyze_data as $index => $row ) {
-			$output .= sprintf( "Row %d:\n", $index + 1 );
+		// Check if this is JSON format (single column with JSON data)
+		if ( 1 === count( $analyze_data ) && 1 === count( reset( $analyze_data ) ) ) {
+			// Get the first (and only) value from the first row
+			$first_row  = reset( $analyze_data );
+			$json_value = reset( $first_row );
 
-			foreach ( $row as $key => $value ) {
-				$formatted_value = self::formatValue( $value );
-				$output         .= sprintf( "  %-20s: %s\n", $key, $formatted_value );
+			// Parse JSON if it's a string
+			if ( is_string( $json_value ) ) {
+				$json_data = json_decode( $json_value, true );
+				if ( is_array( $json_data ) ) {
+					$output .= self::formatJsonExplainOutput( $json_data );
+				} else {
+					// If JSON parsing fails, output as-is
+					$output .= (string) $json_value . "\n";
+				}
+			} else {
+				$output .= (string) $json_value . "\n";
 			}
+		} else {
+			// Traditional ANALYZE format with multiple columns/rows
+			foreach ( $analyze_data as $index => $row ) {
+				$output .= sprintf( "Row %d:\n", $index + 1 );
 
-			$output .= "\n";
+				foreach ( $row as $key => $value ) {
+					$formatted_value = self::formatValue( $value );
+					$output         .= sprintf( "  %-20s: %s\n", $key, $formatted_value );
+				}
+
+				$output .= "\n";
+			}
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Format JSON EXPLAIN output
+	 *
+	 * Converts EXPLAIN FORMAT=JSON data into human-readable format.
+	 *
+	 * @since 0.1.0
+	 * @param array<string, mixed> $json_data Parsed JSON data from EXPLAIN FORMAT=JSON
+	 * @return string Formatted output
+	 */
+	private static function formatJsonExplainOutput( array $json_data ): string {
+		if ( empty( $json_data ) ) {
+			return "No query plan data available.\n";
+		}
+
+		$output = '';
+
+		// Pretty print the JSON structure
+		$output .= self::formatJsonObject( $json_data, 0 );
+
+		return $output;
+	}
+
+	/**
+	 * Format JSON object recursively
+	 *
+	 * Recursively formats JSON objects for display.
+	 *
+	 * @since 0.1.0
+	 * @param mixed $data The data to format
+	 * @param int   $indent The current indentation level
+	 * @return string Formatted output
+	 */
+	private static function formatJsonObject( mixed $data, int $indent = 0 ): string {
+		$output     = '';
+		$indent_str = str_repeat( '  ', $indent );
+
+		if ( is_array( $data ) ) {
+			// Check if it's an associative array
+			if ( ! array_is_list( $data ) ) {
+				foreach ( $data as $key => $value ) {
+					if ( is_array( $value ) && ! empty( $value ) ) {
+						$output .= sprintf( "%s%s:\n", $indent_str, $key );
+						$output .= self::formatJsonObject( $value, $indent + 1 );
+					} else {
+						$formatted_value = self::formatValue( $value );
+						$output         .= sprintf( "%s%-30s: %s\n", $indent_str, $key, $formatted_value );
+					}
+				}
+			} else {
+				// Sequential array
+				foreach ( $data as $index => $value ) {
+					if ( is_array( $value ) ) {
+						$output .= sprintf( "%s[%d]:\n", $indent_str, $index );
+						$output .= self::formatJsonObject( $value, $indent + 1 );
+					} else {
+						$output .= sprintf( "%s[%d]: %s\n", $indent_str, $index, self::formatValue( $value ) );
+					}
+				}
+			}
+		} else {
+			$output .= sprintf( "%s%s\n", $indent_str, self::formatValue( $data ) );
 		}
 
 		return $output;
@@ -317,7 +424,8 @@ final class FormattedOutput {
 		}
 
 		if ( is_array( $value ) ) {
-			return json_encode( $value );
+			$encoded = wp_json_encode( $value );
+			return false !== $encoded ? $encoded : 'Array';
 		}
 
 		return (string) $value;
@@ -334,6 +442,7 @@ final class FormattedOutput {
 	 * @param array<int, array<string, mixed>>                $tables Table structures
 	 * @param array<string, array<int, array<string, mixed>>> $indexes Index information
 	 * @param array<int, array<string, mixed>>                $analyze ANALYZE results (optional)
+	 * @param bool                                            $include_analyze Whether ANALYZE was requested
 	 * @return array<string, mixed> JSON-serializable output
 	 */
 	public static function formatForJSON(
@@ -341,7 +450,8 @@ final class FormattedOutput {
 		array $explain,
 		array $tables,
 		array $indexes,
-		array $analyze = array()
+		array $analyze = array(),
+		bool $include_analyze = false
 	): array {
 		return array(
 			'query'           => $query,
@@ -349,7 +459,7 @@ final class FormattedOutput {
 			'analyze'         => $analyze,
 			'tables'          => $tables,
 			'indexes'         => $indexes,
-			'complete_output' => self::createLLMFriendlyOutput( $query, $explain, $tables, $indexes, $analyze ),
+			'complete_output' => self::createLLMFriendlyOutput( $query, $explain, $tables, $indexes, $analyze, $include_analyze ),
 		);
 	}
 
@@ -360,7 +470,7 @@ final class FormattedOutput {
 	 *
 	 * @since 0.1.0
 	 * @param array<int, array<string, mixed>> $explain EXPLAIN results
-	 * @return array<string, string> Array of insight messages
+	 * @return string[] Array of insight messages
 	 */
 	public static function getInsightsSummary( array $explain ): array {
 		return QueryAnalyzer::getPerformanceInsights( $explain );

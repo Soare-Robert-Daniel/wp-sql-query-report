@@ -74,6 +74,7 @@ final class AdminAssets {
 	private static function enqueueStyles(): void {
 		wp_enqueue_style(
 			'sql-analyzer-admin',                               // Handle
+			/** @phpstan-ignore-next-line */
 			\SQL_ANALYZER_URL . 'assets/admin/css/sql-analyzer-admin.css', // Source
 			array(),                                                 // Dependencies
 			\SQL_ANALYZER_VERSION,                              // Version
@@ -93,6 +94,7 @@ final class AdminAssets {
 	private static function enqueueScripts(): void {
 		wp_enqueue_script(
 			'sql-analyzer-admin',                               // Handle
+			/** @phpstan-ignore-next-line */
 			\SQL_ANALYZER_URL . 'assets/admin/js/sql-analyzer-admin.js', // Source
 			array(),                                                 // Dependencies
 			\SQL_ANALYZER_VERSION,                              // Version

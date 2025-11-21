@@ -49,16 +49,17 @@ final class QueryAnalyzer {
 			throw new \Exception( 'No tables found in query.' );
 		}
 
-		// Execute EXPLAIN to get execution plan
+		// Execute EXPLAIN to get execution plan (EXPLAIN FORMAT=TREE for human-readable output)
 		$explain_result = DatabaseService::executeExplain( $query );
 
-		// Execute ANALYZE if requested
+		// Execute ANALYZE if requested (EXPLAIN FORMAT=JSON for detailed statistics)
+		// Both sections are provided: EXPLAIN (estimated) and ANALYZE (detailed with statistics)
 		$analyze_result = array();
 		if ( $include_analyze ) {
 			$analyze_result = DatabaseService::executeAnalyze( $query );
 		}
 
-		// Build result array
+		// Build result array with both EXPLAIN and ANALYZE sections
 		return array(
 			'query'           => $query,
 			'tables'          => $tables,
@@ -82,8 +83,8 @@ final class QueryAnalyzer {
 		$tables = array();
 
 		// Remove SQL comments
-		$query = preg_replace( '/--.*$/m', '', $query );
-		$query = preg_replace( '|/\*.*?\*/|s', '', $query );
+		$query = preg_replace( '/--.*$/m', '', $query ) ?? $query;
+		$query = preg_replace( '|/\*.*?\*/|s', '', $query ) ?? $query;
 
 		// Pattern to match FROM clause and tables
 		$from_pattern = '/FROM\s+([a-zA-Z0-9_`\-\.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_`]+))?/i';
@@ -130,7 +131,7 @@ final class QueryAnalyzer {
 	public static function getQueryType( string $query ): string {
 		// Remove leading whitespace and comments
 		$query = trim( $query );
-		$query = preg_replace( '/^\/\*.*?\*\//s', '', $query );
+		$query = preg_replace( '/^\/\*.*?\*\//s', '', $query ) ?? $query;
 		$query = trim( $query );
 
 		// Extract first word (the query type)
@@ -240,7 +241,7 @@ final class QueryAnalyzer {
 	 *
 	 * @since 0.1.0
 	 * @param array<int, array<string, mixed>> $explain_result EXPLAIN query results
-	 * @return array<string, string> Array of insights/warnings
+	 * @return list<string> Array of insights/warnings
 	 */
 	public static function getPerformanceInsights( array $explain_result ): array {
 		$insights = array();

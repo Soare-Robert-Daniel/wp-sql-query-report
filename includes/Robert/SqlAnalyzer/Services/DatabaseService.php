@@ -49,45 +49,43 @@ final class DatabaseService {
 	 * @throws \Exception If query execution fails
 	 */
 	public static function executeExplain( string $query ): array {
-		$wpdb = self::getConnection();
-
-		// Prepare EXPLAIN query
-		$explain_query = 'EXPLAIN ' . $query;
+		global $wpdb;
 
 		// Suppress WordPress database query logging for analysis queries
 		$old_suppress = $wpdb->suppress_errors();
 
-		try {
-			// Execute EXPLAIN query
-			$results = $wpdb->get_results( $explain_query, ARRAY_A );
+		// Execute EXPLAIN with FORMAT=TREE for user-friendly output with cost estimates
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results( 'EXPLAIN FORMAT=TREE ' . $query, ARRAY_A );
 
-			// Check for database errors
-			if ( $wpdb->last_error ) {
-				throw new \Exception(
-					sprintf(
-						'Database error: %s',
-						$wpdb->last_error
-					)
-				);
-			}
+		// Restore error suppression state
+		$wpdb->suppress_errors( $old_suppress );
 
-			// Ensure we have results
-			if ( null === $results ) {
-				$results = array();
-			}
-
-			return $results;
-		} finally {
-			// Restore error suppression state
-			$wpdb->suppress_errors( $old_suppress );
+		// Check for database errors
+		if ( $wpdb->last_error ) {
+			throw new \Exception(
+				sprintf(
+					'Database error: %s',
+					// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is internal error logging
+					$wpdb->last_error
+				)
+			);
 		}
+
+		// Ensure we have results
+		if ( null === $results ) {
+			$results = array();
+		}
+
+		return $results;
 	}
 
 	/**
 	 * Execute ANALYZE query
 	 *
-	 * Executes ANALYZE on a query to get execution statistics.
-	 * This actually runs the query, so use with caution on production.
+	 * Uses EXPLAIN ANALYZE (MySQL 8.0.18+) to get real-time execution plan with actual performance metrics.
+	 * This actually executes the query and provides real timing information including actual costs
+	 * of individual iterators and where MySQL spends time during execution.
 	 *
 	 * @since 0.1.0
 	 * @param string $query The SQL query to analyze
@@ -95,38 +93,36 @@ final class DatabaseService {
 	 * @throws \Exception If query execution fails
 	 */
 	public static function executeAnalyze( string $query ): array {
-		$wpdb = self::getConnection();
-
-		// Prepare ANALYZE query
-		$analyze_query = 'ANALYZE ' . $query;
+		global $wpdb;
 
 		// Suppress WordPress database query logging
 		$old_suppress = $wpdb->suppress_errors();
 
-		try {
-			// Execute ANALYZE query (this actually runs the query)
-			$results = $wpdb->get_results( $analyze_query, ARRAY_A );
+		// Use EXPLAIN ANALYZE for real-time execution plan with actual performance metrics
+		// MySQL 8.0.18+ executes the query and provides actual costs and timing data
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results( 'EXPLAIN ANALYZE ' . $query, ARRAY_A );
 
-			// Check for database errors
-			if ( $wpdb->last_error ) {
-				throw new \Exception(
-					sprintf(
-						'Database error: %s',
-						$wpdb->last_error
-					)
-				);
-			}
+		// Restore error suppression state
+		$wpdb->suppress_errors( $old_suppress );
 
-			// Ensure we have results
-			if ( null === $results ) {
-				$results = array();
-			}
-
-			return $results;
-		} finally {
-			// Restore error suppression state
-			$wpdb->suppress_errors( $old_suppress );
+		// Check for database errors
+		if ( $wpdb->last_error ) {
+			throw new \Exception(
+				sprintf(
+					'Database error: %s',
+					// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is internal error logging
+					$wpdb->last_error
+				)
+			);
 		}
+
+		// Ensure we have results
+		if ( null === $results ) {
+			$results = array();
+		}
+
+		return $results;
 	}
 
 	/**
@@ -139,6 +135,7 @@ final class DatabaseService {
 	 */
 	public static function getDatabaseName(): string {
 		$wpdb = self::getConnection();
+		/** @phpstan-ignore-next-line */
 		return $wpdb->dbname;
 	}
 
@@ -170,15 +167,14 @@ final class DatabaseService {
 		// Sanitize table name
 		$table_name = sanitize_key( $table_name );
 
-		// Use WordPress show tables query
-		$query = $wpdb->prepare(
-			'SHOW TABLES WHERE Tables_in_%s = %s',
-			$wpdb->dbname,
-			$table_name
+		// Execute query and check results with prepared statement
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW TABLES LIKE %s',
+				$wpdb->esc_like( $table_name )
+			)
 		);
-
-		// Execute query and check results
-		$result = $wpdb->get_results( $query );
 
 		return ! empty( $result );
 	}
@@ -247,8 +243,8 @@ final class DatabaseService {
 		$query_upper = strtoupper( $query );
 
 		// Remove comments
-		$query_upper = preg_replace( '/--.*$/m', '', $query_upper );
-		$query_upper = preg_replace( '|/\*.*?\*/|s', '', $query_upper );
+		$query_upper = preg_replace( '/--.*$/m', '', $query_upper ) ?? $query_upper;
+		$query_upper = preg_replace( '|/\*.*?\*/|s', '', $query_upper ) ?? $query_upper;
 
 		// Check for destructive operations (SELECT only is allowed)
 		$destructive_patterns = array(

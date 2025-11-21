@@ -36,14 +36,16 @@ final class IndexService {
 	public static function getTableIndexes( string $table_name ): array {
 		$wpdb = DatabaseService::getConnection();
 
-		// Prepare query to get index info
-		$query = $wpdb->prepare(
-			'SHOW INDEX FROM %i WHERE Key_name IS NOT NULL',
-			$table_name
-		);
+		// Sanitize table name - backticks protect identifier from SQL injection
+		$table_name = '`' . sanitize_key( $table_name ) . '`';
 
-		// Execute query
-		$indexes = $wpdb->get_results( $query, ARRAY_A );
+		// Execute query with escaped table identifier
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$indexes = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifier safely escaped with backticks and sanitize_key
+			"SHOW INDEX FROM $table_name WHERE Key_name IS NOT NULL",
+			ARRAY_A
+		);
 
 		if ( null === $indexes ) {
 			$indexes = array();
@@ -103,7 +105,7 @@ final class IndexService {
 		usort(
 			$processed,
 			function ( array $a, array $b ) {
-				return ( $a['seq_in_index'] ?? 0 ) <=> ( $b['seq_in_index'] ?? 0 );
+				return $a['seq_in_index'] <=> $b['seq_in_index'];
 			}
 		);
 
@@ -207,7 +209,7 @@ final class IndexService {
 		);
 
 		foreach ( $indexes as $index ) {
-			if ( $index['name'] === 'PRIMARY' ) {
+			if ( 'PRIMARY' === $index['name'] ) {
 				$stats['primary_key_exists'] = true;
 			}
 

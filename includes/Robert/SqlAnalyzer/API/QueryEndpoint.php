@@ -134,7 +134,7 @@ final class QueryEndpoint {
 	 * Processes the analyze request and returns formatted results.
 	 *
 	 * @since 0.1.0
-	 * @param \WP_REST_Request $request The REST request object
+	 * @param \WP_REST_Request<array<string, mixed>> $request The REST request object
 	 * @return \WP_REST_Response The REST API response
 	 */
 	public static function handleRequest( \WP_REST_Request $request ): \WP_REST_Response {
@@ -193,8 +193,10 @@ final class QueryEndpoint {
 			Security::logSecurityEvent( 'Query analysis error: ' . $e->getMessage() );
 
 			// Return error response
+			/* translators: %s = error message from exception */
+			$error_message = sprintf( __( 'Analysis error: %s', 'sql-analyzer' ), $e->getMessage() );
 			return Security::createErrorResponse(
-				sprintf( __( 'Analysis error: %s', 'sql-analyzer' ), $e->getMessage() ),
+				wp_kses_post( $error_message ),
 				500
 			);
 		}
@@ -221,7 +223,7 @@ final class QueryEndpoint {
 		$wp_tables = QueryAnalyzer::filterWordPressTables( $tables );
 
 		if ( empty( $wp_tables ) ) {
-			throw new \Exception( __( 'No valid WordPress tables found in query.', 'sql-analyzer' ) );
+			throw new \Exception( wp_kses_post( __( 'No valid WordPress tables found in query.', 'sql-analyzer' ) ) );
 		}
 
 		// Get schema information for all tables
@@ -242,7 +244,8 @@ final class QueryEndpoint {
 			$explain_results,
 			$schema_info,
 			$index_info,
-			$analyze_results
+			$analyze_results,
+			$include_analyze
 		);
 
 		// Build response
@@ -253,6 +256,7 @@ final class QueryEndpoint {
 			'explain'         => $explain_results,
 			'analyze'         => $analyze_results,
 			'complete_output' => $complete_output,
+			'include_analyze' => $include_analyze,
 		);
 	}
 }

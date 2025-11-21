@@ -129,7 +129,7 @@
 }
 
 .sql-analyzer-query-input {
-    font-family: "Courier New", Courier, monospace;
+    font-family: monospace;
     font-size: 13px;
     line-height: 1.6;
     padding: 12px;
@@ -358,7 +358,7 @@
     background-color: var(--sql-analyzer-code-bg);
     border: 1px solid var(--sql-analyzer-code-border);
     border-radius: 2px;
-    font-family: "Courier New", Courier, monospace;
+    font-family: monospace;
     font-size: 12px;
     line-height: 1.6;
     color: var(--sql-analyzer-text);

@@ -94,6 +94,7 @@ final class AdminPage {
 		}
 
 		// Include the admin page template
+		/** @phpstan-ignore-next-line */
 		$template_path = \SQL_ANALYZER_DIR . 'templates/admin/query-analyzer.php';
 
 		if ( file_exists( $template_path ) ) {

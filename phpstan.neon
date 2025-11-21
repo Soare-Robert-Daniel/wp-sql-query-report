@@ -1,6 +1,9 @@
 parameters:
 	level: 8
 	paths:
-		- includes
-    bootstrapFiles:
-        - sql-analyzer.php
+		- includes/
+	scanFiles:
+		- sql-analyzer.php
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+

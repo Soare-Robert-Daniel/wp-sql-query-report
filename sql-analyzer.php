@@ -245,7 +245,8 @@ function sql_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Resp
 		return new \WP_REST_Response(
 			array(
 				'success' => false,
-				'message' => sprintf( __( 'Analysis error: %s', 'sql-analyzer' ), $e->getMessage() ),
+				/* translators: %s = error message from exception */
+				'message' => wp_kses_post( sprintf( __( 'Analysis error: %s', 'sql-analyzer' ), $e->getMessage() ) ),
 			),
 			500
 		);
@@ -365,18 +366,18 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 	$tables = sql_analyzer_extract_table_names( $query );
 
 	if ( empty( $tables ) ) {
-		throw new \Exception( __( 'No tables found in query.', 'sql-analyzer' ) );
+		throw new \Exception( wp_kses_post( __( 'No tables found in query.', 'sql-analyzer' ) ) );
 	}
 
-	// Execute EXPLAIN
-	$explain_query   = 'EXPLAIN ' . $query;
-	$explain_results = $wpdb->get_results( $explain_query, ARRAY_A );
+	// Execute EXPLAIN with FORMAT=TREE for user-friendly output with cost estimates
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	$explain_results = $wpdb->get_results( 'EXPLAIN FORMAT=TREE ' . $query, ARRAY_A );
 
-	// Execute ANALYZE if requested
+	// Execute ANALYZE if requested (MySQL 8.0.18+ provides real-time execution metrics)
 	$analyze_results = array();
 	if ( $include_analyze ) {
-		$analyze_query   = 'ANALYZE ' . $query;
-		$analyze_results = $wpdb->get_results( $analyze_query, ARRAY_A );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$analyze_results = $wpdb->get_results( 'EXPLAIN ANALYZE ' . $query, ARRAY_A );
 	}
 
 	// Get table structures and indexes
@@ -384,12 +385,16 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 	$index_info = array();
 
 	foreach ( $tables as $table ) {
+		// Sanitize table name
+		$sanitized_table = sanitize_key( $table );
+
 		// Get table structure
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$columns = $wpdb->get_results(
 			$wpdb->prepare(
 				'SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION',
 				DB_NAME,
-				$table
+				$sanitized_table
 			),
 			ARRAY_A
 		);
@@ -412,12 +417,11 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 			);
 		}
 
-		// Get indexes
+		// Get indexes with escaped table name - backticks protect identifier from SQL injection
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$indexes = $wpdb->get_results(
-			$wpdb->prepare(
-				'SHOW INDEX FROM %i',
-				$table
-			),
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifier safely escaped with backticks and sanitize_key
+			"SHOW INDEX FROM `$sanitized_table`",
 			ARRAY_A
 		);
 
@@ -438,14 +442,14 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 	}
 
 	// Format complete output for LLM
-	$complete_output = sql_analyzer_format_output( $query, $explain_results, $table_info, $index_info, $analyze_results );
+	$complete_output = sql_analyzer_format_output( $query, $explain_results, $table_info, $index_info, $analyze_results, $include_analyze );
 
 	return array(
 		'query'           => $query,
 		'tables'          => array_values( $table_info ),
 		'indexes'         => $index_info,
-		'explain'         => $explain_results ?: array(),
-		'analyze'         => $analyze_results ?: array(),
+		'explain'         => $explain_results ?? array(),
+		'analyze'         => $analyze_results ?? array(),
 		'complete_output' => $complete_output,
 	);
 }
@@ -460,16 +464,18 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
  * @param array  $tables Table structure info.
  * @param array  $indexes Index information.
  * @param array  $analyze ANALYZE results.
+ * @param bool   $include_analyze Whether ANALYZE was requested.
  * @return string Formatted output.
  */
-function sql_analyzer_format_output( string $query, array $explain, array $tables, array $indexes, array $analyze = array() ): string {
+function sql_analyzer_format_output( string $query, array $explain, array $tables, array $indexes, array $analyze = array(), bool $include_analyze = false ): string {
 	$output = '';
 
 	// Header
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= "SQL QUERY ANALYSIS REPORT\n";
 	$output .= str_repeat( '=', 80 ) . "\n";
-	$output .= 'Generated: ' . current_time( 'mysql' ) . "\n\n";
+	$output .= 'Generated: ' . current_time( 'mysql' ) . "\n";
+	$output .= 'Include ANALYZE: ' . ( $include_analyze ? 'Yes' : 'No' ) . "\n\n";
 
 	// Original Query
 	$output .= str_repeat( '-', 80 ) . "\n";
@@ -483,11 +489,20 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 	$output .= str_repeat( '-', 80 ) . "\n";
 
 	if ( ! empty( $explain ) ) {
-		foreach ( $explain as $row ) {
-			foreach ( $row as $key => $value ) {
-				$output .= sprintf( "%-20s: %s\n", $key, $value ?? 'NULL' );
+		// Check if this is EXPLAIN FORMAT=TREE output (single column, tree format)
+		if ( 1 === count( $explain ) && 1 === count( reset( $explain ) ) ) {
+			// Get the tree value directly and output as-is
+			$first_row  = reset( $explain );
+			$tree_value = reset( $first_row );
+			$output    .= (string) $tree_value . "\n\n";
+		} else {
+			// Traditional EXPLAIN format with multiple columns/rows
+			foreach ( $explain as $row ) {
+				foreach ( $row as $key => $value ) {
+					$output .= sprintf( "%-20s: %s\n", $key, $value ?? 'NULL' );
+				}
+				$output .= "\n";
 			}
-			$output .= "\n";
 		}
 	} else {
 		$output .= "No execution plan data available.\n\n";
@@ -499,11 +514,20 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 		$output .= "QUERY EXECUTION ANALYSIS (ANALYZE):\n";
 		$output .= str_repeat( '-', 80 ) . "\n";
 
-		foreach ( $analyze as $row ) {
-			foreach ( $row as $key => $value ) {
-				$output .= sprintf( "%-20s: %s\n", $key, $value ?? 'NULL' );
+		// Check if this is tree format output
+		if ( 1 === count( $analyze ) && 1 === count( reset( $analyze ) ) ) {
+			// Get the tree value directly and output as-is
+			$first_row  = reset( $analyze );
+			$tree_value = reset( $first_row );
+			$output    .= (string) $tree_value . "\n\n";
+		} else {
+			// Traditional ANALYZE format
+			foreach ( $analyze as $row ) {
+				foreach ( $row as $key => $value ) {
+					$output .= sprintf( "%-20s: %s\n", $key, $value ?? 'NULL' );
+				}
+				$output .= "\n";
 			}
-			$output .= "\n";
 		}
 	}
 
