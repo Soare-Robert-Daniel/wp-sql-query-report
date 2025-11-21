@@ -1,7 +1,8 @@
 import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import { CopyButton } from './CopyButton';
+import { DownloadButton } from './DownloadButton';
 import { QueryCard } from './QueryCard';
-import { SummaryMetrics } from './SummaryMetrics';
 import type { AnalysisResponse } from '../types';
 
 interface AnalysisReportProps {
@@ -17,12 +18,12 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
     return null;
   }
 
-  const { queries, summary, complete_output } = response;
+  const { queries, complete_output } = response;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       <div className="bg-gray-50 px-6 py-1 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 m-0">SQL Query Analysis Report</h3>
+        <h3 className="text-lg font-semibold text-gray-900 m-0">{__('SQL Query Analysis Report', 'sql-analyzer')}</h3>
       </div>
 
       {/* Tabs */}
@@ -35,7 +36,7 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
               : 'border-transparent text-gray-700 hover:text-gray-900'
           }`}
         >
-          Visual Analysis
+          {__('Visual Analysis', 'sql-analyzer')}
         </button>
         <button
           onClick={() => setActiveTab('llm')}
@@ -45,7 +46,7 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
               : 'border-transparent text-gray-700 hover:text-gray-900'
           }`}
         >
-          LLM Export
+          {__('LLM Export', 'sql-analyzer')}
         </button>
       </div>
 
@@ -71,8 +72,7 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
               <p className="text-xs text-blue-800">
-                💡 <strong>Tip:</strong> Copy the text below and paste it into your LLM chat for comprehensive query
-                analysis and optimization suggestions.
+                💡 <strong>{__('Tip:', 'sql-analyzer')}</strong> {__('Copy the text below and paste it into your LLM chat for comprehensive query analysis and optimization suggestions.', 'sql-analyzer')}
               </p>
             </div>
             <div className="relative">
@@ -80,8 +80,9 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
                 {complete_output}
               </pre>
             </div>
-            <div>
+            <div className="flex gap-3">
               <CopyButton content={complete_output} label="Copy for LLM" />
+              <DownloadButton content={complete_output} label="Download Report" />
             </div>
           </div>
         )}

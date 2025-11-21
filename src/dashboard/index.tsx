@@ -1,5 +1,7 @@
 import { createRoot, useState, useCallback } from '@wordpress/element';
+import { I18nProvider } from '@wordpress/react-i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { __, sprintf } from '@wordpress/i18n';
 import './index.css';
 import { QueryForm } from './components/QueryForm';
 import { ResultsDisplay } from './components/ResultsDisplay';
@@ -18,7 +20,7 @@ const Dashboard = () => {
   const analyzeQueries = useCallback(async () => {
     const validQueries = queries.filter((q) => q.query.trim());
     if (validQueries.length === 0) {
-      setError('Please enter at least one SQL query');
+      setError(__('Please enter at least one SQL query', 'sql-analyzer'));
       return;
     }
 
@@ -33,7 +35,7 @@ const Dashboard = () => {
         data: {
           queries: validQueries.map((q) => ({
             id: q.id,
-            label: q.label || `Query ${queries.indexOf(q) + 1}`,
+            label: q.label || sprintf(__('Query %d', 'sql-analyzer'), queries.indexOf(q) + 1),
             query: q.query.trim(),
           })),
           include_analyze: includeAnalyze,
@@ -46,7 +48,7 @@ const Dashboard = () => {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'An error occurred while analyzing the queries';
+        err instanceof Error ? err.message : __('An error occurred while analyzing the queries', 'sql-analyzer');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -65,14 +67,13 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="sql-analyzer-app bg-gray-100 min-h-screen py-8 px-4">
+    <div className="sql-analyzer-app bg-gray-100 min-h-screen px-4">
       <div className="">
         {/* Header - Full Width */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">SQL Analyzer</h1>
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{__('SQL Analyzer', 'sql-analyzer')}</h1>
           <p className="text-gray-600">
-            Analyze your SQL queries with detailed EXPLAIN results and database structure
-            information
+            {__('Analyze your SQL queries with detailed EXPLAIN results and database structure information', 'sql-analyzer')}
           </p>
         </div>
 
@@ -95,20 +96,20 @@ const Dashboard = () => {
               <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
                 <div className="inline-flex items-center">
                   <div className="animate-spin h-4 w-4 mr-2 border-2 border-blue-600 border-t-transparent rounded-full" />
-                  <span className="text-sm text-gray-700">Analyzing {queries.filter(q => q.query.trim()).length} queries...</span>
+                  <span className="text-sm text-gray-700">{sprintf(__('Analyzing %d queries...', 'sql-analyzer'), queries.filter(q => q.query.trim()).length)}</span>
                 </div>
               </div>
             )}
 
-            {error && <Alert type="error" title="Error" message={error} onDismiss={handleDismissError} />}
+            {error && <Alert type="error" title={__('Error', 'sql-analyzer')} message={error} onDismiss={handleDismissError} />}
 
             {response && !error && (
               response.success ? (
-                <Alert type="success" title="Success" message={response.message} />
+                <Alert type="success" title={__('Success', 'sql-analyzer')} message={response.message} />
               ) : (
                 <Alert
                   type="error"
-                  title="Error"
+                  title={__('Error', 'sql-analyzer')}
                   message={response.message}
                   onDismiss={handleDismissError}
                 />
@@ -132,4 +133,8 @@ const Dashboard = () => {
 };
 
 const root = createRoot(document.getElementById('dashboard')!);
-root.render(<Dashboard />);
+root.render(
+  <I18nProvider>
+    <Dashboard />
+  </I18nProvider>
+);

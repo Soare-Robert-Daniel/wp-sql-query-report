@@ -1,3 +1,5 @@
+import { __ } from '@wordpress/i18n';
+
 interface AlertProps {
   type: 'success' | 'error';
   title: string;
@@ -27,7 +29,7 @@ export function Alert({ type, title, message, onDismiss }: AlertProps) {
           <button
             onClick={onDismiss}
             className={`${buttonHoverColor} ml-2 p-1 rounded transition-colors`}
-            aria-label="Dismiss"
+            aria-label={__('Dismiss', 'sql-analyzer')}
           >
             <span className="text-lg leading-none">×</span>
           </button>

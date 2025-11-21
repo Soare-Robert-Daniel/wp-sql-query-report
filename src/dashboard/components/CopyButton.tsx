@@ -1,11 +1,12 @@
 import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 
 interface CopyButtonProps {
   content: string;
   label?: string;
 }
 
-export function CopyButton({ content, label = 'Copy' }: CopyButtonProps) {
+export function CopyButton({ content, label = __('Copy', 'sql-analyzer') }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -16,7 +17,7 @@ export function CopyButton({ content, label = 'Copy' }: CopyButtonProps) {
       // Reset after 2 seconds
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      console.error('Failed to copy to clipboard');
+      console.error(__('Failed to copy to clipboard', 'sql-analyzer'));
     }
   };
 
@@ -25,7 +26,7 @@ export function CopyButton({ content, label = 'Copy' }: CopyButtonProps) {
       onClick={handleCopy}
       className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
     >
-      <span>{copied ? 'Copied!' : label}</span>
+      <span>{copied ? __('Copied!', 'sql-analyzer') : label}</span>
     </button>
   );
 }

@@ -1,3 +1,4 @@
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { QueryInput as QueryInputType } from '../types';
 import { QueryInput } from './QueryInput';
 
@@ -73,7 +74,7 @@ export function QueryForm({
         disabled={loading}
         className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        + Add Another Query
+        {__('+Add Another Query', 'sql-analyzer')}
       </button>
 
       {/* Options */}
@@ -88,7 +89,7 @@ export function QueryForm({
             className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
           />
           <label htmlFor="include-analyze" className="ml-2 text-sm text-gray-700 cursor-pointer">
-            Include ANALYZE results for all queries
+            {__('Include ANALYZE results for all queries', 'sql-analyzer')}
           </label>
         </div>
 
@@ -99,7 +100,9 @@ export function QueryForm({
             disabled={loading || !hasValidQueries}
             className="px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            {loading ? `Analyzing ${queries.length} Queries...` : `Analyze All Queries (${queries.length})`}
+            {loading
+              ? sprintf(_n('Analyzing %d Query...', 'Analyzing %d Queries...', queries.length, 'sql-analyzer'), queries.length)
+              : sprintf(_n('Analyze Query (%d)', 'Analyze All Queries (%d)', queries.length, 'sql-analyzer'), queries.length)}
           </button>
           <button
             type="button"
@@ -107,7 +110,7 @@ export function QueryForm({
             disabled={loading || !hasValidQueries}
             className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
-            Clear All
+            {__('Clear All', 'sql-analyzer')}
           </button>
         </div>
       </div>
