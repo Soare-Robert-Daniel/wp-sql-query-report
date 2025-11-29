@@ -1,5 +1,4 @@
 import { createRoot, useState, useCallback } from "@wordpress/element";
-import { I18nProvider } from "@wordpress/react-i18n";
 import apiFetch from "@wordpress/api-fetch";
 import { __, sprintf } from "@wordpress/i18n";
 import "./index.css";
@@ -190,7 +189,5 @@ const Dashboard = () => {
 
 const root = createRoot(document.getElementById("dashboard")!);
 root.render(
-  <I18nProvider>
-    <Dashboard />
-  </I18nProvider>,
+  <Dashboard />
 );

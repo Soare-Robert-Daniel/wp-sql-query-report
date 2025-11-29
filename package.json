@@ -30,7 +30,6 @@
     "@wordpress/element": "^6.35.0",
     "@wordpress/html-entities": "^4.35.0",
     "@wordpress/icons": "^11.2.0",
-    "@wordpress/react-i18n": "^4.35.0",
     "@wordpress/url": "^4.35.0",
     "@wordpress/wordcount": "^4.35.0",
     "postcss": "^8.5.6",
