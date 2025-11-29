@@ -70,7 +70,7 @@ function simple_sql_query_analyzer_render_page(): void {
 		wp_die( esc_html__( 'You do not have permission to access this page.', 'simple-sql-query-analyzer' ) );
 	}
 
-	$template_path = SIMPLE_SQL_QUERY_ANALYZER_DIR . 'templates/admin/query-analyzer.php';
+	$template_path = SIMPLE_SQL_QUERY_ANALYZER_DIR . 'includes/templates/admin/query-analyzer.php';
 	if ( file_exists( $template_path ) ) {
 		include $template_path;
 	}
@@ -179,10 +179,10 @@ function simple_sql_query_analyzer_register_rest_endpoint(): void {
  *
  * Processes the analyze request and returns formatted results.
  *
- * @param \WP_REST_Request $request The REST request object.
+ * @param \WP_REST_Request<array<string, mixed>> $request The REST request object.
  * @return \WP_REST_Response The REST API response.
  */
-function simple_sql_query_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Response {
+function simple_sql_query_analyzer_handle_request( $request ) {
 	try {
 		$nonce = $request->get_header( 'X-WP-Nonce' );
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
@@ -249,8 +249,8 @@ function simple_sql_query_analyzer_validate_query( string $query ): bool {
 	$query_upper = strtoupper( $query );
 
 	// Remove comments.
-	$query_upper = preg_replace( '/--.*$/m', '', $query_upper );
-	$query_upper = preg_replace( '|/\*.*?\*/|s', '', $query_upper );
+	$query_upper = (string) preg_replace( '/--.*$/m', '', $query_upper );
+	$query_upper = (string) preg_replace( '|/\*.*?\*/|s', '', $query_upper );
 
 	// Check for destructive operations.
 	$destructive_patterns = array(
@@ -294,14 +294,14 @@ function simple_sql_query_analyzer_validate_query( string $query ): bool {
  * Parses a SQL query to extract all table names referenced.
  *
  * @param string $query The SQL query to parse.
- * @return array Array of table names found in query.
+ * @return array<int, string> Array of table names found in query.
  */
 function simple_sql_query_analyzer_extract_table_names( string $query ): array {
 	$tables = array();
 
 	// Remove SQL comments.
-	$query = preg_replace( '/--.*$/m', '', $query );
-	$query = preg_replace( '|/\*.*?\*/|s', '', $query );
+	$query = (string) preg_replace( '/--.*$/m', '', $query );
+	$query = (string) preg_replace( '|/\*.*?\*/|s', '', $query );
 
 	// Pattern to match FROM clause.
 	$from_pattern = '/FROM\s+([a-zA-Z0-9_`\-\.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_`]+))?/i';
@@ -337,9 +337,9 @@ function simple_sql_query_analyzer_extract_table_names( string $query ): array {
  *
  * Processes an array of queries and returns aggregated results.
  *
- * @param array $query_inputs Array of query objects with id, label, query.
- * @param bool  $include_analyze Whether to include ANALYZE results.
- * @return array Array containing queries, summary, and complete_output.
+ * @param array<int, array<string, string>> $query_inputs Array of query objects with id, label, query.
+ * @param bool                              $include_analyze Whether to include ANALYZE results.
+ * @return array<string, mixed> Array containing queries, summary, and complete_output.
  * @throws \Exception If analysis fails.
  */
 function simple_sql_query_analyzer_analyze_queries( array $query_inputs, bool $include_analyze = false ): array {
@@ -438,7 +438,7 @@ function simple_sql_query_analyzer_analyze_queries( array $query_inputs, bool $i
  *
  * @param string $query The SQL query to analyze.
  * @param bool   $include_analyze Whether to include ANALYZE results.
- * @return array Analysis results.
+ * @return array<string, mixed> Analysis results.
  * @throws \Exception If analysis fails.
  */
 function simple_sql_query_analyzer_analyze_query( string $query, bool $include_analyze = false ): array {
@@ -535,7 +535,7 @@ function simple_sql_query_analyzer_analyze_query( string $query, bool $include_a
 /**
  * Format table columns with aligned padding.
  *
- * @param array $columns Array of column data.
+ * @param array<int, array<string, mixed>> $columns Array of column data.
  * @return string Formatted columns with aligned padding.
  */
 function simple_sql_query_analyzer_format_table_columns( array $columns ): string {
@@ -583,7 +583,7 @@ function simple_sql_query_analyzer_format_table_columns( array $columns ): strin
 /**
  * Format indexes with aligned padding.
  *
- * @param array $indexes Array of index data.
+ * @param array<int, array<string, mixed>> $indexes Array of index data.
  * @return string Formatted indexes with aligned padding.
  */
 function simple_sql_query_analyzer_format_indexes( array $indexes ): string {
@@ -633,7 +633,7 @@ function simple_sql_query_analyzer_format_indexes( array $indexes ): string {
  *
  * Creates a comprehensive report for multiple queries.
  *
- * @param array $query_results Array of query result objects.
+ * @param array<int, array<string, mixed>> $query_results Array of query result objects.
  * @return string Formatted output for LLM export.
  */
 function simple_sql_query_analyzer_format_multi_query_output( array $query_results ): string {
@@ -777,7 +777,7 @@ function simple_sql_query_analyzer_format_multi_query_output( array $query_resul
  */
 function simple_sql_query_analyzer_get_query_type( string $query ): string {
 	$upper = strtoupper( trim( $query ) );
-	$upper = preg_replace( '/^(\/\*.*?\*\/)*/s', '', $upper );
+	$upper = (string) preg_replace( '/^(\/\*.*?\*\/)*/s', '', $upper );
 
 	if ( preg_match( '/^SELECT\s+/i', $upper ) ) {
 		return 'SELECT';
@@ -797,12 +797,12 @@ function simple_sql_query_analyzer_get_query_type( string $query ): string {
  *
  * Creates a comprehensive, well-formatted analysis report.
  *
- * @param string $query The SQL query.
- * @param array  $explain EXPLAIN results.
- * @param array  $tables Table structure info.
- * @param array  $indexes Index information.
- * @param array  $analyze ANALYZE results.
- * @param bool   $include_analyze Whether ANALYZE was requested.
+ * @param string                                              $query The SQL query.
+ * @param array<int, array<string, mixed>>                    $explain EXPLAIN results.
+ * @param array<string|int, array<string, mixed>>             $tables Table structure info.
+ * @param array<string|int, array<int, array<string, mixed>>> $indexes Index information.
+ * @param array<int, array<string, mixed>>                    $analyze ANALYZE results.
+ * @param bool                                                $include_analyze Whether ANALYZE was requested.
  * @return string Formatted output.
  */
 function simple_sql_query_analyzer_format_output( string $query, array $explain, array $tables, array $indexes, array $analyze = array(), bool $include_analyze = false ): string {

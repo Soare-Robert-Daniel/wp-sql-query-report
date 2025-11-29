@@ -2,7 +2,9 @@ parameters:
 	level: 8
 	paths:
 		- sql-analyzer.php
-		- templates/
+		- includes/
+	ignoreErrors:
+		- message: '#Constant DB_NAME not found#'
 
 includes:
 	- vendor/szepeviktor/phpstan-wordpress/extension.neon

@@ -1,13 +1,6 @@
 {
-    "name": "robert/sql-analyzer",
-    "require": {
-        "phpstan/phpstan": "^2.1"
-    },
-    "autoload": {
-        "psr-4": {
-            "Robert\\SqlAnalyzer\\": "includes/"
-        }
-    },
+    "name": "soare-robert-daniel/simple-sql-query-analyzer",
+    "description": "A simple SQL query analyzer for WordPress",
     "authors": [
         {
             "name": "Soare Robert-Daniel",
@@ -16,7 +9,8 @@
     ],
     "require-dev": {
         "wp-coding-standards/wpcs": "^3.0",
-        "szepeviktor/phpstan-wordpress": "^2.0"
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "phpstan/phpstan": "^2.1"
     },
     "scripts": {
         "phpstan": "phpstan analyse -c phpstan.neon --memory-limit=2G",

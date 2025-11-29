@@ -10,7 +10,8 @@
     "build": "wp-scripts build",
     "build:watch": "wp-scripts start",
     "dev:hot": "wp-scripts start --hot --allowed-hosts all",
-    "lint": "oxlint ./src"
+    "lint": "oxlint ./src",
+    "plugin-zip": "wp-scripts plugin-zip"
   },
   "devDependencies": {
     "@wordpress/eslint-plugin": "^22.21.0",
