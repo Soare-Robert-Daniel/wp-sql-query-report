@@ -111,18 +111,6 @@ function simple_sql_query_analyzer_enqueue_assets( string $hook_suffix ): void {
 		'restNonce'       => wp_create_nonce( 'wp_rest' ),
 		'analyzeEndpoint' => rest_url( 'sql-analyzer/v1/analyze' ),
 		'version'         => SIMPLE_SQL_QUERY_ANALYZER_VERSION,
-		'i18n'            => array(
-			'loading'          => __( 'Loading...', 'simple-sql-query-analyzer' ),
-			'analyzing'        => __( 'Analyzing query...', 'simple-sql-query-analyzer' ),
-			'error'            => __( 'Error', 'simple-sql-query-analyzer' ),
-			'success'          => __( 'Success', 'simple-sql-query-analyzer' ),
-			'copied'           => __( 'Copied to clipboard!', 'simple-sql-query-analyzer' ),
-			'copyFailed'       => __( 'Failed to copy to clipboard', 'simple-sql-query-analyzer' ),
-			'invalidQuery'     => __( 'Please enter a valid SQL query', 'simple-sql-query-analyzer' ),
-			'serverError'      => __( 'Server error occurred', 'simple-sql-query-analyzer' ),
-			'noTables'         => __( 'No tables found in query', 'simple-sql-query-analyzer' ),
-			'queryDestructive' => __( 'This query appears to be destructive and cannot be analyzed', 'simple-sql-query-analyzer' ),
-		),
 	);
 
 	wp_localize_script(

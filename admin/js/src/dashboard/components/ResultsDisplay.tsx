@@ -1,6 +1,6 @@
-import { AnalysisReport } from './AnalysisReport';
-import { EmptyState } from './EmptyState';
-import type { AnalysisResponse } from '../types';
+import { AnalysisReport } from "./AnalysisReport";
+import { EmptyState } from "./EmptyState";
+import type { AnalysisResponse } from "../types";
 
 interface ResultsDisplayProps {
   loading: boolean;
@@ -9,12 +9,7 @@ interface ResultsDisplayProps {
   onDismissError: () => void;
 }
 
-export function ResultsDisplay({
-  loading,
-  error,
-  response,
-  onDismissError,
-}: ResultsDisplayProps) {
+export function ResultsDisplay({ loading, error, response }: ResultsDisplayProps) {
   return (
     <div className="space-y-4 h-full">
       {response && response.queries && <AnalysisReport response={response} />}

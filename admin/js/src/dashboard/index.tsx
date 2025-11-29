@@ -1,17 +1,15 @@
-import { createRoot, useState, useCallback } from '@wordpress/element';
-import { I18nProvider } from '@wordpress/react-i18n';
-import apiFetch from '@wordpress/api-fetch';
-import { __, sprintf } from '@wordpress/i18n';
-import './index.css';
-import { QueryForm } from './components/QueryForm';
-import { ResultsDisplay } from './components/ResultsDisplay';
-import { Alert } from './components/Alert';
-import type { AnalysisResponse, QueryInput } from './types';
+import { createRoot, useState, useCallback } from "@wordpress/element";
+import { I18nProvider } from "@wordpress/react-i18n";
+import apiFetch from "@wordpress/api-fetch";
+import { __, sprintf } from "@wordpress/i18n";
+import "./index.css";
+import { QueryForm } from "./components/QueryForm";
+import { ResultsDisplay } from "./components/ResultsDisplay";
+import { Alert } from "./components/Alert";
+import type { AnalysisResponse, QueryInput } from "./types";
 
 const Dashboard = () => {
-  const [queries, setQueries] = useState<QueryInput[]>([
-    { id: '1', label: '', query: '' },
-  ]);
+  const [queries, setQueries] = useState<QueryInput[]>([{ id: "1", label: "", query: "" }]);
   const [includeAnalyze, setIncludeAnalyze] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +18,7 @@ const Dashboard = () => {
   const analyzeQueries = useCallback(async () => {
     const validQueries = queries.filter((q) => q.query.trim());
     if (validQueries.length === 0) {
-      setError(__('Please enter at least one SQL query', 'sql-analyzer'));
+      setError(__("Please enter at least one SQL query", "sql-analyzer"));
       return;
     }
 
@@ -30,12 +28,12 @@ const Dashboard = () => {
 
     try {
       const data: AnalysisResponse = await apiFetch({
-        path: '/sql-analyzer/v1/analyze',
-        method: 'POST',
+        path: "/sql-analyzer/v1/analyze",
+        method: "POST",
         data: {
           queries: validQueries.map((q) => ({
             id: q.id,
-            label: q.label || sprintf(__('Query %d', 'sql-analyzer'), queries.indexOf(q) + 1),
+            label: q.label || sprintf(__("Query %d", "sql-analyzer"), queries.indexOf(q) + 1),
             query: q.query.trim(),
           })),
           include_analyze: includeAnalyze,
@@ -48,7 +46,9 @@ const Dashboard = () => {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : __('An error occurred while analyzing the queries', 'sql-analyzer');
+        err instanceof Error
+          ? err.message
+          : __("An error occurred while analyzing the queries", "sql-analyzer");
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ const Dashboard = () => {
   }, [queries, includeAnalyze]);
 
   const handleClear = useCallback(() => {
-    setQueries([{ id: '1', label: '', query: '' }]);
+    setQueries([{ id: "1", label: "", query: "" }]);
     setIncludeAnalyze(false);
     setError(null);
     setResponse(null);
@@ -71,9 +71,14 @@ const Dashboard = () => {
       <div className="">
         {/* Header - Full Width */}
         <div className="mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{__('SQL Analyzer', 'sql-analyzer')}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {__("SQL Analyzer", "sql-analyzer")}
+          </h1>
           <p className="text-gray-600">
-            {__('Analyze your SQL queries with detailed EXPLAIN results and database structure information', 'sql-analyzer')}
+            {__(
+              "Analyze your SQL queries with detailed EXPLAIN results and database structure information",
+              "sql-analyzer",
+            )}
           </p>
         </div>
 
@@ -96,25 +101,41 @@ const Dashboard = () => {
               <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
                 <div className="inline-flex items-center">
                   <div className="animate-spin h-4 w-4 mr-2 border-2 border-blue-600 border-t-transparent rounded-full" />
-                  <span className="text-sm text-gray-700">{sprintf(__('Analyzing %d queries...', 'sql-analyzer'), queries.filter(q => q.query.trim()).length)}</span>
+                  <span className="text-sm text-gray-700">
+                    {sprintf(
+                      __("Analyzing %d queries...", "sql-analyzer"),
+                      queries.filter((q) => q.query.trim()).length,
+                    )}
+                  </span>
                 </div>
               </div>
             )}
 
-            {error && <Alert type="error" title={__('Error', 'sql-analyzer')} message={error} onDismiss={handleDismissError} />}
+            {error && (
+              <Alert
+                type="error"
+                title={__("Error", "sql-analyzer")}
+                message={error}
+                onDismiss={handleDismissError}
+              />
+            )}
 
-            {response && !error && (
-              response.success ? (
-                <Alert type="success" title={__('Success', 'sql-analyzer')} message={response.message} />
+            {response &&
+              !error &&
+              (response.success ? (
+                <Alert
+                  type="success"
+                  title={__("Success", "sql-analyzer")}
+                  message={response.message}
+                />
               ) : (
                 <Alert
                   type="error"
-                  title={__('Error', 'sql-analyzer')}
+                  title={__("Error", "sql-analyzer")}
                   message={response.message}
                   onDismiss={handleDismissError}
                 />
-              )
-            )}
+              ))}
           </div>
 
           {/* Right Column - Results Display */}
@@ -132,9 +153,9 @@ const Dashboard = () => {
   );
 };
 
-const root = createRoot(document.getElementById('dashboard')!);
+const root = createRoot(document.getElementById("dashboard")!);
 root.render(
   <I18nProvider>
     <Dashboard />
-  </I18nProvider>
+  </I18nProvider>,
 );

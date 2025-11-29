@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useState } from "@wordpress/element";
 
 interface RawExplainOutputProps {
   data: Array<Record<string, unknown>>;
@@ -7,13 +7,13 @@ interface RawExplainOutputProps {
 
 export function RawExplainOutput({ data, isAnalyze = false }: RawExplainOutputProps) {
   // Extract the raw output string from the data array
-  const rawOutput = data && data.length > 0 ? (data[0]['EXPLAIN'] as string) : null;
+  const rawOutput = data && data.length > 0 ? (data[0]["EXPLAIN"] as string) : null;
 
   if (!rawOutput) {
     return null;
   }
 
-  const title = isAnalyze ? 'Raw EXPLAIN ANALYZE Output' : 'Raw EXPLAIN Output';
+  const title = isAnalyze ? "Raw EXPLAIN ANALYZE Output" : "Raw EXPLAIN Output";
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -48,7 +48,7 @@ function CopyRawButton({ content }: CopyRawButtonProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      console.error('Failed to copy to clipboard');
+      console.error("Failed to copy to clipboard");
     }
   };
 
@@ -57,7 +57,7 @@ function CopyRawButton({ content }: CopyRawButtonProps) {
       onClick={handleCopy}
       className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
     >
-      {copied ? '✓ Copied!' : 'Copy Output'}
+      {copied ? "✓ Copied!" : "Copy Output"}
     </button>
   );
 }

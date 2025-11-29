@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useState } from "@wordpress/element";
 
 interface TreeLine {
   depth: number;
@@ -17,7 +17,7 @@ interface EnhancedExplainTreeProps {
 }
 
 export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedExplainTreeProps) {
-  const lines = parseExplainTree(rawExplain || '');
+  const lines = parseExplainTree(rawExplain || "");
 
   if (!rawExplain || rawExplain.trim().length === 0) {
     return (
@@ -53,7 +53,7 @@ export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedE
     <div className="bg-white border border-gray-200 rounded-lg p-4">
       <div className="mb-3 pb-2 border-b border-gray-200">
         <h3 className="text-xs font-semibold text-gray-900">
-          {isAnalyze ? 'Execution Plan (Actual)' : 'Execution Plan (Estimated)'}
+          {isAnalyze ? "Execution Plan (Actual)" : "Execution Plan (Estimated)"}
         </h3>
       </div>
 
@@ -62,11 +62,15 @@ export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedE
         <div className="text-xs text-gray-600 space-y-1">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
-              <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap">Cost</span>
+              <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
+                Cost
+              </span>
               <span className="text-gray-600">Query cost (relative units)</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap">Rows</span>
+              <span className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
+                Rows
+              </span>
               <span className="text-gray-600">Estimated output rows</span>
             </div>
           </div>
@@ -98,7 +102,7 @@ function getAllExpandedNodes(lines: TreeLine[]): Set<number> {
 }
 
 function parseExplainTree(rawExplain: string): TreeLine[] {
-  const lineStrings = rawExplain.split('\n').filter((line) => line.trim());
+  const lineStrings = rawExplain.split("\n").filter((line) => line.trim());
   const allLines: TreeLine[] = [];
 
   for (const line of lineStrings) {
@@ -118,7 +122,7 @@ function parseLine(line: string): TreeLine | null {
   const depth = Math.floor(leadingSpaces / 4);
 
   // Check if line starts with "->"
-  if (!line.includes('->')) {
+  if (!line.includes("->")) {
     return null;
   }
 
@@ -129,7 +133,7 @@ function parseLine(line: string): TreeLine | null {
   }
 
   const operation = match[1].trim();
-  const metrics = match[2] || '';
+  const metrics = match[2] || "";
 
   // Parse cost and rows
   let cost: number | null = null;
@@ -149,9 +153,9 @@ function parseLine(line: string): TreeLine | null {
     depth,
     operation,
     cost,
-    costFormatted: cost !== null ? formatNumber(cost) : '',
+    costFormatted: cost !== null ? formatNumber(cost) : "",
     rows,
-    rowsFormatted: rows !== null ? formatNumber(rows) : '',
+    rowsFormatted: rows !== null ? formatNumber(rows) : "",
     children: [],
     rawLine: line,
   };
@@ -197,29 +201,22 @@ function formatNumber(num: number): string {
 }
 
 function getCostColor(cost: number | null): string {
-  if (cost === null) return 'bg-gray-100 text-gray-700';
-  if (cost < 1000) return 'bg-green-100 text-green-800';
-  if (cost < 100000) return 'bg-yellow-100 text-yellow-800';
-  if (cost < 1000000) return 'bg-orange-100 text-orange-800';
-  return 'bg-red-100 text-red-800';
+  if (cost === null) return "bg-gray-100 text-gray-700";
+  if (cost < 1000) return "bg-green-100 text-green-800";
+  if (cost < 100000) return "bg-yellow-100 text-yellow-800";
+  if (cost < 1000000) return "bg-orange-100 text-orange-800";
+  return "bg-red-100 text-red-800";
 }
 
 function getOperationIcon(operation: string): string {
   const upper = operation.toUpperCase();
-  if (upper.includes('TABLE SCAN')) return '📊';
-  if (upper.includes('INDEX')) return '🔑';
-  if (upper.includes('JOIN')) return '⛓️';
-  if (upper.includes('FILTER')) return '🔍';
-  if (upper.includes('SORT')) return '↗️';
-  if (upper.includes('AGGREGATE')) return '📈';
-  return '⚙️';
-}
-
-interface RenderTreeLinesProps {
-  lines: TreeLine[];
-  nodeIndex: number;
-  expandedNodes: Set<number>;
-  toggleNode: (index: number) => void;
+  if (upper.includes("TABLE SCAN")) return "📊";
+  if (upper.includes("INDEX")) return "🔑";
+  if (upper.includes("JOIN")) return "⛓️";
+  if (upper.includes("FILTER")) return "🔍";
+  if (upper.includes("SORT")) return "↗️";
+  if (upper.includes("AGGREGATE")) return "📈";
+  return "⚙️";
 }
 
 function renderTreeLines(
@@ -227,7 +224,7 @@ function renderTreeLines(
   parentIndex: number,
   expandedNodes: Set<number>,
   toggleNode: (index: number) => void,
-  depth: number = 0
+  depth: number = 0,
 ): React.ReactNode {
   let globalIndex = parentIndex;
 
@@ -237,11 +234,11 @@ function renderTreeLines(
     const isExpanded = expandedNodes.has(currentIndex);
 
     const depthColors = [
-      'text-blue-700',
-      'text-indigo-700',
-      'text-purple-700',
-      'text-pink-700',
-      'text-red-700',
+      "text-blue-700",
+      "text-indigo-700",
+      "text-purple-700",
+      "text-pink-700",
+      "text-red-700",
     ];
     const textColor = depthColors[line.depth % depthColors.length];
 
@@ -259,7 +256,7 @@ function renderTreeLines(
                 onClick={() => toggleNode(currentIndex)}
                 className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 group-hover:bg-gray-200 rounded transition-colors"
               >
-                <span className="text-xs">{isExpanded ? '▼' : '▶'}</span>
+                <span className="text-xs">{isExpanded ? "▼" : "▶"}</span>
               </button>
             ) : (
               <div className="flex-shrink-0 w-4" />
@@ -275,7 +272,7 @@ function renderTreeLines(
             {line.cost !== null && (
               <span
                 className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${getCostColor(
-                  line.cost
+                  line.cost,
                 )}`}
               >
                 {line.costFormatted}

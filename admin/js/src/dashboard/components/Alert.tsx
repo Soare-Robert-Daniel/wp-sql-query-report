@@ -1,19 +1,19 @@
-import { __ } from '@wordpress/i18n';
+import { __ } from "@wordpress/i18n";
 
 interface AlertProps {
-  type: 'success' | 'error';
+  type: "success" | "error";
   title: string;
   message: string;
   onDismiss?: () => void;
 }
 
 export function Alert({ type, title, message, onDismiss }: AlertProps) {
-  const isError = type === 'error';
-  const bgColor = isError ? 'bg-red-50' : 'bg-green-50';
-  const borderColor = isError ? 'border-red-200' : 'border-green-200';
-  const textColor = isError ? 'text-red-900' : 'text-green-900';
-  const titleColor = isError ? 'text-red-700' : 'text-green-700';
-  const buttonHoverColor = isError ? 'hover:bg-red-100' : 'hover:bg-green-100';
+  const isError = type === "error";
+  const bgColor = isError ? "bg-red-50" : "bg-green-50";
+  const borderColor = isError ? "border-red-200" : "border-green-200";
+  const textColor = isError ? "text-red-900" : "text-green-900";
+  const titleColor = isError ? "text-red-700" : "text-green-700";
+  const buttonHoverColor = isError ? "hover:bg-red-100" : "hover:bg-green-100";
 
   return (
     <div
@@ -29,7 +29,7 @@ export function Alert({ type, title, message, onDismiss }: AlertProps) {
           <button
             onClick={onDismiss}
             className={`${buttonHoverColor} ml-2 p-1 rounded transition-colors`}
-            aria-label={__('Dismiss', 'sql-analyzer')}
+            aria-label={__("Dismiss", "sql-analyzer")}
           >
             <span className="text-lg leading-none">×</span>
           </button>

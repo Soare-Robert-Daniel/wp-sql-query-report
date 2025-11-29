@@ -1,4 +1,4 @@
-import type { QueryInput as QueryInputType } from '../types';
+import type { QueryInput as QueryInputType } from "../types";
 
 interface QueryInputProps {
   query: QueryInputType;
@@ -45,9 +45,7 @@ export function QueryInput({
         )}
       </div>
 
-      <label className="block text-xs font-semibold text-gray-600 mb-1">
-        SQL Query
-      </label>
+      <label className="block text-xs font-semibold text-gray-600 mb-1">SQL Query</label>
       <textarea
         value={query.query}
         onChange={(e) => onQueryChange(e.target.value)}

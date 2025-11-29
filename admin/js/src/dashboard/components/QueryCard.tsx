@@ -1,7 +1,7 @@
-import { useState } from '@wordpress/element';
-import { EnhancedExplainTree } from './EnhancedExplainTree';
-import { TableInfo } from './TableInfo';
-import type { QueryResult } from '../types';
+import { useState } from "@wordpress/element";
+import { EnhancedExplainTree } from "./EnhancedExplainTree";
+import { TableInfo } from "./TableInfo";
+import type { QueryResult } from "../types";
 
 interface QueryCardProps {
   query: QueryResult;
@@ -9,7 +9,7 @@ interface QueryCardProps {
   totalQueries: number;
 }
 
-export function QueryCard({ query, index, totalQueries }: QueryCardProps) {
+export function QueryCard({ query, index }: QueryCardProps) {
   const [isExpanded, setIsExpanded] = useState(index === 0);
 
   if (query.error) {
@@ -37,10 +37,10 @@ export function QueryCard({ query, index, totalQueries }: QueryCardProps) {
         <div>
           <h3 className="text-sm font-semibold text-gray-900">{query.label}</h3>
           <p className="text-xs text-gray-600 mt-0.5">
-            {query.execution_time ? `${(query.execution_time * 1000).toFixed(1)}ms` : 'Pending'}
+            {query.execution_time ? `${(query.execution_time * 1000).toFixed(1)}ms` : "Pending"}
           </p>
         </div>
-        <span className="text-xl">{isExpanded ? '▼' : '▶'}</span>
+        <span className="text-xl">{isExpanded ? "▼" : "▶"}</span>
       </button>
 
       {isExpanded && (
@@ -55,17 +55,21 @@ export function QueryCard({ query, index, totalQueries }: QueryCardProps) {
 
           {/* Execution Plans */}
           {query.analyze && query.analyze.length > 0 && (
-            <EnhancedExplainTree rawExplain={query.analyze[0]['EXPLAIN'] as string} isAnalyze={true} />
+            <EnhancedExplainTree
+              rawExplain={query.analyze[0]["EXPLAIN"] as string}
+              isAnalyze={true}
+            />
           )}
 
           {query.explain && query.explain.length > 0 && (
-            <EnhancedExplainTree rawExplain={query.explain[0]['EXPLAIN'] as string} isAnalyze={false} />
+            <EnhancedExplainTree
+              rawExplain={query.explain[0]["EXPLAIN"] as string}
+              isAnalyze={false}
+            />
           )}
 
           {/* Tables */}
-          {query.tables.length > 0 && (
-            <TableInfo tables={query.tables} indexes={query.indexes} />
-          )}
+          {query.tables.length > 0 && <TableInfo tables={query.tables} indexes={query.indexes} />}
         </div>
       )}
     </div>

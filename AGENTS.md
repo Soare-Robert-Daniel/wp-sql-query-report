@@ -1,53 +1,30 @@
-# SQL Analyzer Plugin - Agent Guidelines
+# SQL Analyzer - Agent Guide
 
-## Build & Development Commands
+## Commands
 
-### JavaScript/Frontend (React Dashboard)
+```bash
+# Frontend
+npm run build          # Production build
+npm run build:watch    # Dev watch mode
+npm run lint           # Lint JS/TS
 
--   `npm run build` - Build React dashboard for production
--   `npm run build:watch` - Watch mode for development
--   `npm run dev:hot` - Hot reload development server
--   `npm run lint` - Lint JavaScript/TypeScript with oxlint
--   `npm start` - Run Grunt tasks (i18n, readme generation)
+# PHP
+composer phpstan       # Static analysis (level 8)
+composer lint          # Check WPCS
+composer lint:fix      # Auto-fix
+```
 
-### PHP Backend
+## Structure
 
--   `composer phpstan` - Run static analysis (level 8)
--   `composer lint` - Check PHP code standards (WPCS)
--   `composer lint:fix` - Auto-fix code style issues
--   Single test: `./vendor/bin/phpunit --filter TestName tests/`
+-   **Main file:** `sql-analyzer.php` (all PHP logic)
+-   **Frontend:** `src/dashboard/` (React + Tailwind)
+-   **Build output:** `build/dashboard.{js,css,asset.php}`
+-   **REST endpoint:** `POST /wp-json/sql-analyzer/v1/analyze` (requires `manage_options`)
 
-## Architecture & Structure
+## Code Rules
 
-**Type:** WordPress admin plugin with React frontend
-**Root:** `sql-analyzer.php` (main plugin file, ~970 lines)
-**Frontend:** `src/dashboard/` (React components built with @wordpress packages)
-**Backend:** No separate files (logic in main plugin)
-**Database:** Uses WordPress `$wpdb` global, no custom tables
-**Build Output:** `build/dashboard.{js,css,asset.php}`
+**PHP:** WordPress Coding Standards, namespace `Robert\SqlAnalyzer`, prefix `sql_analyzer_`, always use `$wpdb->prepare()`
 
-REST endpoint: `/wp-json/sql-analyzer/v1/analyze` (POST, requires `manage_options`)
+**JS:** @wordpress packages, Tailwind CSS v4, oxlint for linting
 
-## Code Style Guidelines
-
-**PHP:**
-
--   WordPress Coding Standards with PSR-4 namespace `Robert\SqlAnalyzer`
--   Prefix: `sql_analyzer_` for functions/globals
--   Text domain: `sql-analyzer` (internationalization)
--   No destructive SQL (INSERT/UPDATE/DELETE/DROP/ALTER/CREATE blocked)
--   Use `$wpdb->prepare()` for parameterized queries; escaped table identifiers with backticks + `sanitize_key()`
-
-**JavaScript:**
-
--   @wordpress/eslint-plugin rules
--   Oxlint with plugins: react, react-perf, typescript, unicorn, import, jsdoc
--   Dependencies: @wordpress packages (api-fetch, element, react-i18n, url, icons, etc.)
--   Tailwind CSS v4 with PostCSS
-
-**General:**
-
--   WordPress minimum: 6.7 (PHP 7.4+)
--   Type hints on PHP functions (return type `: void`, `: array`, etc.)
--   Error handling: Exceptions thrown, caught at endpoint level
--   Security: Nonce verification (`wp_rest`), capability checks (`manage_options`)
+**Security:** No destructive SQL allowed (INSERT/UPDATE/DELETE/DROP/ALTER/CREATE blocked)
