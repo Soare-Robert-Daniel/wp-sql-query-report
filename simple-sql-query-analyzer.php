@@ -231,48 +231,38 @@ function simple_sql_query_analyzer_handle_request( $request ) {
 /**
  * Validate SQL query.
  *
- * Checks that the query is a SELECT statement and doesn't contain destructive operations.
+ * Ensures only a single query is executed (no stacked queries) and blocks
+ * dangerous functions. Allows all query types (SELECT, INSERT, UPDATE, DELETE)
+ * since EXPLAIN prefix prevents actual data modification.
  *
  * @param string $query The SQL query to validate.
  * @return bool True if query is safe for analysis.
  */
 function simple_sql_query_analyzer_validate_query( string $query ): bool {
-	$query       = trim( $query );
-	$query_upper = strtoupper( $query );
+	$query = trim( $query );
 
-	// Remove comments.
-	$query_upper = (string) preg_replace( '/--.*$/m', '', $query_upper );
-	$query_upper = (string) preg_replace( '|/\*.*?\*/|s', '', $query_upper );
+	// Remove SQL comments that could hide malicious code.
+	$clean_query = (string) preg_replace( '/--.*$/m', '', $query );
+	$clean_query = (string) preg_replace( '|/\*.*?\*/|s', '', $clean_query );
+	$clean_query = trim( $clean_query );
 
-	// Check for destructive operations.
-	$destructive_patterns = array(
-		'/^\s*INSERT\s+/i',
-		'/^\s*UPDATE\s+/i',
-		'/^\s*DELETE\s+/i',
-		'/^\s*DROP\s+/i',
-		'/^\s*TRUNCATE\s+/i',
-		'/^\s*ALTER\s+/i',
-		'/^\s*CREATE\s+/i',
-		'/^\s*GRANT\s+/i',
-		'/^\s*REVOKE\s+/i',
-	);
-
-	foreach ( $destructive_patterns as $pattern ) {
-		if ( preg_match( $pattern, $query ) ) {
-			return false;
-		}
+	// Block semicolons to prevent stacked queries (multi-statement attacks).
+	// This must be checked AFTER removing comments to catch hidden semicolons.
+	if ( strpos( $clean_query, ';' ) !== false ) {
+		return false;
 	}
 
-	// Check for dangerous functions.
+	// Block dangerous functions that could cause harm even in single queries.
 	$dangerous_patterns = array(
-		'/EXEC\s*\(/i',
-		'/INTO\s+OUTFILE/i',
-		'/INTO\s+DUMPFILE/i',
-		'/LOAD_FILE\s*\(/i',
+		'/INTO\s+OUTFILE/i',  // File write.
+		'/INTO\s+DUMPFILE/i', // File write.
+		'/LOAD_FILE\s*\(/i',  // File read.
+		'/BENCHMARK\s*\(/i',  // DoS.
+		'/SLEEP\s*\(/i',      // DoS.
 	);
 
 	foreach ( $dangerous_patterns as $pattern ) {
-		if ( preg_match( $pattern, $query ) ) {
+		if ( preg_match( $pattern, $clean_query ) ) {
 			return false;
 		}
 	}
@@ -349,7 +339,7 @@ function simple_sql_query_analyzer_analyze_queries( array $query_inputs, bool $i
 				'id'      => $input['id'],
 				'label'   => $input['label'],
 				'query'   => $input['query'],
-				'error'   => __( 'Only SELECT queries are allowed', 'simple-sql-query-analyzer' ),
+				'error'   => __( 'Query blocked: contains stacked queries (semicolons) or dangerous functions', 'simple-sql-query-analyzer' ),
 				'tables'  => array(),
 				'indexes' => array(),
 				'explain' => array(),
@@ -565,8 +555,8 @@ function simple_sql_query_analyzer_analyze_query( string $query, bool $include_a
 		'query'           => $query,
 		'tables'          => array_values( $table_info ),
 		'indexes'         => $index_info,
-		'explain'         => $explain_results ?? array(),
-		'analyze'         => $analyze_results ?? array(),
+		'explain'         => $explain_results,
+		'analyze'         => $analyze_results,
 		'complete_output' => $complete_output,
 	);
 }
