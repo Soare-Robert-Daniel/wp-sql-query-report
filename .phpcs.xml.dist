@@ -22,30 +22,21 @@
 	<!-- Rules: Check PHP version compatibility -->
 	<!--
 	https://github.com/PHPCompatibility/PHPCompatibility#sniffing-your-code-for-compatibility-with-specific-php-versions -->
-	<config name="testVersion" value="5.6-" />
+	<config name="testVersion" value="7.4-" />
 	<!-- https://github.com/PHPCompatibility/PHPCompatibilityWP -->
 
 	<!-- Rules: WordPress Coding Standards -->
 	<!-- https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards -->
 	<!--
 	https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards/wiki/Customizable-sniff-properties -->
-	<config name="minimum_supported_wp_version" value="4.6" />
+	<config name="minimum_supported_wp_version" value="6.8" />
 	<rule ref="WordPress">
-		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar" />
-		<exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop" />
-		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedNamespaceFound" />
-		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid" />
-		<exclude name="Squiz.Commenting.FunctionComment.ThrowsNoFullStop" />
-		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
-		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
-		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching" />
-		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery" />
 	</rule>
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<!-- Value: replace the function, class, and variable prefixes used. -->
 			<property name="prefixes" type="array">
-				<element value="sql_analyzer" />
+				<element value="simple_sql_query_analyzer" />
 			</property>
 		</properties>
 	</rule>
@@ -53,7 +44,7 @@
 		<properties>
 			<!-- Value: replace the text domain used. -->
 			<property name="text_domain" type="array">
-				<element value="sql-analyzer" />
+				<element value="simple-sql-query-analyzer" />
 			</property>
 		</properties>
 	</rule>

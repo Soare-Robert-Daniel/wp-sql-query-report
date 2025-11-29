@@ -1,11 +1,10 @@
-=== SQL Analyzer ===
-Contributors: wordpress-org
-Donate link: https://example.com/
-Tags: database, sql, debugging, query-analysis, ai
-Requires at least: 6.7.0
-Tested up to: 6.8.3
-Requires PHP: 8.0
-Stable tag: 0.1.0
+=== Simple SQL Query Analyzer ===
+Contributors: soarerobertdaniel7
+Tags: database, sql, debugging, query-analysis, analyze, explain
+Requires at least: 6.8.0
+Tested up to: 6.8
+Requires PHP: 7.4
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -106,7 +105,7 @@ No, but it's a powerful assistant. The AI-friendly reports help developers and D
 
 == Changelog ==
 
-= 0.1.0 =
+= 1.0.0 =
 * Initial release
 * SQL query parsing and structural analysis
 * Multiple export formats (JSON, Markdown, Text)
@@ -117,5 +116,5 @@ No, but it's a powerful assistant. The AI-friendly reports help developers and D
 
 == Upgrade Notice ==
 
-= 0.1.0 =
+= 1.0.0 =
 Initial release of SQL Analyzer. Start generating AI-friendly query reports today!

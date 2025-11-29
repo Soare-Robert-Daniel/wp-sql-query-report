@@ -6,102 +6,94 @@
  * view execution plans (EXPLAIN), database structures, and index information.
  * The formatted output can be easily copied and pasted into LLM chat applications.
  *
- * Plugin Name:     SQL Analyzer
+ * Plugin Name:     Simple SQL Query Analyzer
  * Plugin URI:      https://github.com/soare-robert-daniel/sql-analyzer
- * Description:     Analyze SQL queries with EXPLAIN/ANALYZE, view database structures, and export for LLM integration
+ * Description:     Analyze SQL queries with EXPLAIN/ANALYZE, view database structures, and export for LLM integration.
  * Author:          Soare Robert-Daniel
- * Author URI:      https://soare.dev
- * Text Domain:     sql-analyzer
- * Domain Path:     /languages
- * Version:         0.1.0
+ * Text Domain:     simple-sql-query-analyzer
+ * Version:         1.0.0
  * Requires PHP:    7.4
- * Requires WP:     5.0
+ * Requires WP:     6.8
+ * License:         GPLv2 or later
  *
- * @package         Robert\SqlAnalyzer
+ * @package         simple-sql-query-analyzer
  * @author          Soare Robert-Daniel <soare.robert.daniel@protonmail.com>
  * @license         GPL-2.0-or-later
  * @link            https://github.com/soare-robert-daniel/sql-analyzer
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit( 'Direct script access denied.' );
 }
 
-// Define plugin constants
-define( 'SQL_ANALYZER_VERSION', '0.1.0' );
-define( 'SQL_ANALYZER_FILE', __FILE__ );
-define( 'SQL_ANALYZER_DIR', plugin_dir_path( __FILE__ ) );
-define( 'SQL_ANALYZER_URL', plugin_dir_url( __FILE__ ) );
+define( 'SIMPLE_SQL_QUERY_ANALYZER_VERSION', '1.0.0' );
+define( 'SIMPLE_SQL_QUERY_ANALYZER_FILE', __FILE__ );
+define( 'SIMPLE_SQL_QUERY_ANALYZER_DIR', plugin_dir_path( __FILE__ ) );
+define( 'SIMPLE_SQL_QUERY_ANALYZER_URL', plugin_dir_url( __FILE__ ) );
 
-// Register admin menu and enqueue scripts
-add_action( 'admin_menu', 'sql_analyzer_register_menu' );
-add_action( 'admin_enqueue_scripts', 'sql_analyzer_enqueue_assets' );
-add_action( 'rest_api_init', 'sql_analyzer_register_rest_endpoint' );
+add_action( 'admin_menu', 'simple_sql_query_analyzer_register_menu' );
+add_action( 'admin_enqueue_scripts', 'simple_sql_query_analyzer_enqueue_assets' );
+add_action( 'rest_api_init', 'simple_sql_query_analyzer_register_rest_endpoint' );
 
 /**
- * Register the admin menu
+ * Register the admin menu.
  *
  * Creates a submenu under "Tools" for the SQL Analyzer.
  *
  * @return void
  */
-function sql_analyzer_register_menu(): void {
-	// Check user capability
+function simple_sql_query_analyzer_register_menu(): void {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
 
 	add_submenu_page(
 		'tools.php',
-		__( 'SQL Analyzer', 'sql-analyzer' ),
-		__( 'SQL Analyzer', 'sql-analyzer' ),
+		__( 'SQL Analyzer', 'simple-sql-query-analyzer' ),
+		__( 'SQL Analyzer', 'simple-sql-query-analyzer' ),
 		'manage_options',
-		'sql-analyzer',
-		'sql_analyzer_render_page'
+		'simple-sql-query-analyzer',
+		'simple_sql_query_analyzer_render_page'
 	);
 }
 
 /**
- * Render the admin page
+ * Render the admin page.
  *
  * Displays the SQL Analyzer admin interface.
  *
  * @return void
  */
-function sql_analyzer_render_page(): void {
-	// Check user capability
+function simple_sql_query_analyzer_render_page(): void {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( esc_html__( 'You do not have permission to access this page.', 'sql-analyzer' ) );
+		wp_die( esc_html__( 'You do not have permission to access this page.', 'simple-sql-query-analyzer' ) );
 	}
 
-	// Include the admin page template
-	$template_path = SQL_ANALYZER_DIR . 'templates/admin/query-analyzer.php';
+	$template_path = SIMPLE_SQL_QUERY_ANALYZER_DIR . 'templates/admin/query-analyzer.php';
 	if ( file_exists( $template_path ) ) {
 		include $template_path;
 	}
 }
 
 /**
- * Enqueue admin scripts and styles
+ * Enqueue admin scripts and styles.
  *
  * Enqueues CSS and JavaScript files for the admin page.
  *
  * @param string $hook_suffix The current admin page hook.
  * @return void
  */
-function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
-	// Only enqueue on the SQL Analyzer admin page
-	if ( false === strpos( $hook_suffix, 'sql-analyzer' ) ) {
+function simple_sql_query_analyzer_enqueue_assets( string $hook_suffix ): void {
+	if ( false === strpos( $hook_suffix, 'simple-sql-query-analyzer' ) ) {
 		return;
 	}
 
-	// Load React dashboard assets
-	$dashboard_asset = include SQL_ANALYZER_DIR . 'build/dashboard.asset.php';
+	$dashboard_asset = include SIMPLE_SQL_QUERY_ANALYZER_DIR . 'build/dashboard.asset.php';
 
 	wp_enqueue_script(
 		'sql-analyzer-dashboard',
-		SQL_ANALYZER_URL . 'build/dashboard.js',
+		SIMPLE_SQL_QUERY_ANALYZER_URL . 'build/dashboard.js',
 		$dashboard_asset['dependencies'],
 		$dashboard_asset['version'],
 		array( 'in_footer' => true )
@@ -109,32 +101,30 @@ function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
 
 	wp_enqueue_style(
 		'sql-analyzer-dashboard-style',
-		SQL_ANALYZER_URL . 'build/dashboard.css',
+		SIMPLE_SQL_QUERY_ANALYZER_URL . 'build/dashboard.css',
 		array(),
 		$dashboard_asset['version']
 	);
 
-	// Localize script with WordPress data for React
 	$localized_data = array(
 		'restRoot'        => rest_url(),
 		'restNonce'       => wp_create_nonce( 'wp_rest' ),
 		'analyzeEndpoint' => rest_url( 'sql-analyzer/v1/analyze' ),
-		'version'         => SQL_ANALYZER_VERSION,
+		'version'         => SIMPLE_SQL_QUERY_ANALYZER_VERSION,
 		'i18n'            => array(
-			'loading'          => __( 'Loading...', 'sql-analyzer' ),
-			'analyzing'        => __( 'Analyzing query...', 'sql-analyzer' ),
-			'error'            => __( 'Error', 'sql-analyzer' ),
-			'success'          => __( 'Success', 'sql-analyzer' ),
-			'copied'           => __( 'Copied to clipboard!', 'sql-analyzer' ),
-			'copyFailed'       => __( 'Failed to copy to clipboard', 'sql-analyzer' ),
-			'invalidQuery'     => __( 'Please enter a valid SQL query', 'sql-analyzer' ),
-			'serverError'      => __( 'Server error occurred', 'sql-analyzer' ),
-			'noTables'         => __( 'No tables found in query', 'sql-analyzer' ),
-			'queryDestructive' => __( 'This query appears to be destructive and cannot be analyzed', 'sql-analyzer' ),
+			'loading'          => __( 'Loading...', 'simple-sql-query-analyzer' ),
+			'analyzing'        => __( 'Analyzing query...', 'simple-sql-query-analyzer' ),
+			'error'            => __( 'Error', 'simple-sql-query-analyzer' ),
+			'success'          => __( 'Success', 'simple-sql-query-analyzer' ),
+			'copied'           => __( 'Copied to clipboard!', 'simple-sql-query-analyzer' ),
+			'copyFailed'       => __( 'Failed to copy to clipboard', 'simple-sql-query-analyzer' ),
+			'invalidQuery'     => __( 'Please enter a valid SQL query', 'simple-sql-query-analyzer' ),
+			'serverError'      => __( 'Server error occurred', 'simple-sql-query-analyzer' ),
+			'noTables'         => __( 'No tables found in query', 'simple-sql-query-analyzer' ),
+			'queryDestructive' => __( 'This query appears to be destructive and cannot be analyzed', 'simple-sql-query-analyzer' ),
 		),
 	);
 
-	// Note: @wordpress/api-fetch automatically handles nonces with the wp_rest meta tag
 	wp_localize_script(
 		'sql-analyzer-dashboard',
 		'sqlAnalyzerData',
@@ -143,19 +133,19 @@ function sql_analyzer_enqueue_assets( string $hook_suffix ): void {
 }
 
 /**
- * Register REST API endpoint
+ * Register REST API endpoint.
  *
  * Registers the analyze endpoint with WordPress REST API.
  *
  * @return void
  */
-function sql_analyzer_register_rest_endpoint(): void {
+function simple_sql_query_analyzer_register_rest_endpoint(): void {
 	register_rest_route(
 		'sql-analyzer/v1',
 		'/analyze',
 		array(
 			'methods'             => 'POST',
-			'callback'            => 'sql_analyzer_handle_request',
+			'callback'            => 'simple_sql_query_analyzer_handle_request',
 			'permission_callback' => function () {
 				return current_user_can( 'manage_options' );
 			},
@@ -185,52 +175,47 @@ function sql_analyzer_register_rest_endpoint(): void {
 }
 
 /**
- * Handle REST API request
+ * Handle REST API request.
  *
  * Processes the analyze request and returns formatted results.
  *
  * @param \WP_REST_Request $request The REST request object.
  * @return \WP_REST_Response The REST API response.
  */
-function sql_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Response {
+function simple_sql_query_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Response {
 	try {
-		// Verify nonce
 		$nonce = $request->get_header( 'X-WP-Nonce' );
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'Security verification failed. Please refresh the page.', 'sql-analyzer' ),
+					'message' => __( 'Security verification failed. Please refresh the page.', 'simple-sql-query-analyzer' ),
 				),
 				403
 			);
 		}
 
-		// Get parameters
 		$queries         = $request->get_param( 'queries' );
 		$include_analyze = (bool) $request->get_param( 'include_analyze' );
 
-		// Validate queries input
 		if ( empty( $queries ) || ! is_array( $queries ) ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'At least one query is required', 'sql-analyzer' ),
+					'message' => __( 'At least one query is required', 'simple-sql-query-analyzer' ),
 				),
 				400
 			);
 		}
 
-		// Analyze all queries
-		$results = sql_analyzer_analyze_queries( $queries, $include_analyze );
+		$results = simple_sql_query_analyzer_analyze_queries( $queries, $include_analyze );
 
-		// Return success response
 		return new \WP_REST_Response(
 			array(
 				'success'         => true,
 				'message'         => sprintf(
 					/* translators: %d = number of queries */
-					__( 'Analyzed %d queries successfully.', 'sql-analyzer' ),
+					__( 'Analyzed %d queries successfully.', 'simple-sql-query-analyzer' ),
 					count( $results['queries'] )
 				),
 				'queries'         => $results['queries'],
@@ -244,7 +229,7 @@ function sql_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Resp
 			array(
 				'success' => false,
 				/* translators: %s = error message from exception */
-				'message' => wp_kses_post( sprintf( __( 'Analysis error: %s', 'sql-analyzer' ), $e->getMessage() ) ),
+				'message' => wp_kses_post( sprintf( __( 'Analysis error: %s', 'simple-sql-query-analyzer' ), $e->getMessage() ) ),
 			),
 			500
 		);
@@ -252,22 +237,22 @@ function sql_analyzer_handle_request( \WP_REST_Request $request ): \WP_REST_Resp
 }
 
 /**
- * Validate SQL query
+ * Validate SQL query.
  *
  * Checks that the query is a SELECT statement and doesn't contain destructive operations.
  *
  * @param string $query The SQL query to validate.
  * @return bool True if query is safe for analysis.
  */
-function sql_analyzer_validate_query( string $query ): bool {
+function simple_sql_query_analyzer_validate_query( string $query ): bool {
 	$query       = trim( $query );
 	$query_upper = strtoupper( $query );
 
-	// Remove comments
+	// Remove comments.
 	$query_upper = preg_replace( '/--.*$/m', '', $query_upper );
 	$query_upper = preg_replace( '|/\*.*?\*/|s', '', $query_upper );
 
-	// Check for destructive operations
+	// Check for destructive operations.
 	$destructive_patterns = array(
 		'/^\s*INSERT\s+/i',
 		'/^\s*UPDATE\s+/i',
@@ -286,7 +271,7 @@ function sql_analyzer_validate_query( string $query ): bool {
 		}
 	}
 
-	// Check for dangerous functions
+	// Check for dangerous functions.
 	$dangerous_patterns = array(
 		'/EXEC\s*\(/i',
 		'/INTO\s+OUTFILE/i',
@@ -304,33 +289,33 @@ function sql_analyzer_validate_query( string $query ): bool {
 }
 
 /**
- * Extract table names from query
+ * Extract table names from query.
  *
  * Parses a SQL query to extract all table names referenced.
  *
  * @param string $query The SQL query to parse.
  * @return array Array of table names found in query.
  */
-function sql_analyzer_extract_table_names( string $query ): array {
+function simple_sql_query_analyzer_extract_table_names( string $query ): array {
 	$tables = array();
 
-	// Remove SQL comments
+	// Remove SQL comments.
 	$query = preg_replace( '/--.*$/m', '', $query );
 	$query = preg_replace( '|/\*.*?\*/|s', '', $query );
 
-	// Pattern to match FROM clause
+	// Pattern to match FROM clause.
 	$from_pattern = '/FROM\s+([a-zA-Z0-9_`\-\.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_`]+))?/i';
 	if ( preg_match_all( $from_pattern, $query, $matches ) ) {
 		$tables = array_merge( $tables, $matches[1] );
 	}
 
-	// Pattern to match JOIN clauses
+	// Pattern to match JOIN clauses.
 	$join_pattern = '/JOIN\s+([a-zA-Z0-9_`\-\.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_`]+))?/i';
 	if ( preg_match_all( $join_pattern, $query, $matches ) ) {
 		$tables = array_merge( $tables, $matches[1] );
 	}
 
-	// Clean up table names
+	// Clean up table names.
 	$tables = array_map(
 		function ( $table ) {
 			$table = str_replace( '`', '', $table );
@@ -340,7 +325,7 @@ function sql_analyzer_extract_table_names( string $query ): array {
 		$tables
 	);
 
-	// Remove nulls and duplicates
+	// Remove nulls and duplicates.
 	$tables = array_filter( $tables );
 	$tables = array_unique( $tables );
 
@@ -348,7 +333,7 @@ function sql_analyzer_extract_table_names( string $query ): array {
 }
 
 /**
- * Analyze multiple SQL queries
+ * Analyze multiple SQL queries.
  *
  * Processes an array of queries and returns aggregated results.
  *
@@ -357,7 +342,7 @@ function sql_analyzer_extract_table_names( string $query ): array {
  * @return array Array containing queries, summary, and complete_output.
  * @throws \Exception If analysis fails.
  */
-function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyze = false ): array {
+function simple_sql_query_analyzer_analyze_queries( array $query_inputs, bool $include_analyze = false ): array {
 	$results       = array();
 	$total_cost    = 0;
 	$total_time    = 0;
@@ -366,13 +351,13 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
 	$has_warnings  = false;
 
 	foreach ( $query_inputs as $index => $input ) {
-		// Validate query is safe for analysis
-		if ( ! sql_analyzer_validate_query( $input['query'] ) ) {
+		// Validate query is safe for analysis.
+		if ( ! simple_sql_query_analyzer_validate_query( $input['query'] ) ) {
 			$results[] = array(
 				'id'      => $input['id'],
 				'label'   => $input['label'],
 				'query'   => $input['query'],
-				'error'   => __( 'Only SELECT queries are allowed', 'sql-analyzer' ),
+				'error'   => __( 'Only SELECT queries are allowed', 'simple-sql-query-analyzer' ),
 				'tables'  => array(),
 				'indexes' => array(),
 				'explain' => array(),
@@ -384,8 +369,7 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
 		$start_time = microtime( true );
 
 		try {
-			// Analyze this query
-			$query_result   = sql_analyzer_analyze_query( $input['query'], $include_analyze );
+			$query_result   = simple_sql_query_analyzer_analyze_query( $input['query'], $include_analyze );
 			$execution_time = microtime( true ) - $start_time;
 
 			$query_result['id']             = $input['id'];
@@ -394,7 +378,7 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
 			$query_result['execution_time'] = $execution_time;
 			$query_result['error']          = null;
 
-			// Calculate total cost (approximation from first explain line)
+			// Calculate total cost (approximation from first explain line).
 			if ( ! empty( $query_result['explain'] ) ) {
 				$explain_text = $query_result['explain'][0]['EXPLAIN'] ?? '';
 				if ( preg_match( '/cost=([0-9.e+]+)/', $explain_text, $matches ) ) {
@@ -405,13 +389,11 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
 
 			$total_time += $execution_time;
 
-			// Track slowest query
 			if ( $execution_time > $slowest_time ) {
 				$slowest_time  = $execution_time;
 				$slowest_index = $index;
 			}
 
-			// Check for warnings
 			if ( ! empty( $query_result['explain'] ) ) {
 				$explain_text = strtoupper( $query_result['explain'][0]['EXPLAIN'] ?? '' );
 				if ( strpos( $explain_text, 'TABLE SCAN' ) !== false ) {
@@ -434,8 +416,7 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
 		}
 	}
 
-	// Prepare complete output for LLM
-	$complete_output = sql_analyzer_format_multi_query_output( $results );
+	$complete_output = simple_sql_query_analyzer_format_multi_query_output( $results );
 
 	return array(
 		'queries'         => $results,
@@ -451,7 +432,7 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
 }
 
 /**
- * Analyze SQL query
+ * Analyze SQL query.
  *
  * Executes EXPLAIN/ANALYZE and gathers database information.
  *
@@ -460,36 +441,33 @@ function sql_analyzer_analyze_queries( array $query_inputs, bool $include_analyz
  * @return array Analysis results.
  * @throws \Exception If analysis fails.
  */
-function sql_analyzer_analyze_query( string $query, bool $include_analyze = false ): array {
+function simple_sql_query_analyzer_analyze_query( string $query, bool $include_analyze = false ): array {
 	global $wpdb;
 
-	// Extract table names
-	$tables = sql_analyzer_extract_table_names( $query );
+	$tables = simple_sql_query_analyzer_extract_table_names( $query );
 
 	if ( empty( $tables ) ) {
-		throw new \Exception( wp_kses_post( __( 'No tables found in query.', 'sql-analyzer' ) ) );
+		throw new \Exception( wp_kses_post( __( 'No tables found in query.', 'simple-sql-query-analyzer' ) ) );
 	}
 
-	// Execute EXPLAIN with FORMAT=TREE for user-friendly output with cost estimates
+	// Execute EXPLAIN with FORMAT=TREE for user-friendly output with cost estimates.
 	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$explain_results = $wpdb->get_results( 'EXPLAIN FORMAT=TREE ' . $query, ARRAY_A );
 
-	// Execute ANALYZE if requested (MySQL 8.0.18+ provides real-time execution metrics)
+	// Execute ANALYZE if requested (MySQL 8.0.18+ provides real-time execution metrics).
 	$analyze_results = array();
 	if ( $include_analyze ) {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$analyze_results = $wpdb->get_results( 'EXPLAIN ANALYZE ' . $query, ARRAY_A );
 	}
 
-	// Get table structures and indexes
 	$table_info = array();
 	$index_info = array();
 
 	foreach ( $tables as $table ) {
-		// Sanitize table name
 		$sanitized_table = sanitize_key( $table );
 
-		// Get table structure
+		// Get table structure.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$columns = $wpdb->get_results(
 			$wpdb->prepare(
@@ -518,7 +496,7 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 			);
 		}
 
-		// Get indexes with escaped table name - backticks protect identifier from SQL injection
+		// Get indexes with escaped table name - backticks protect identifier from SQL injection.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$indexes = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifier safely escaped with backticks and sanitize_key
@@ -542,8 +520,7 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 		}
 	}
 
-	// Format complete output for LLM
-	$complete_output = sql_analyzer_format_output( $query, $explain_results, $table_info, $index_info, $analyze_results, $include_analyze );
+	$complete_output = simple_sql_query_analyzer_format_output( $query, $explain_results, $table_info, $index_info, $analyze_results, $include_analyze );
 
 	return array(
 		'query'           => $query,
@@ -556,17 +533,17 @@ function sql_analyzer_analyze_query( string $query, bool $include_analyze = fals
 }
 
 /**
- * Format table columns with aligned padding
+ * Format table columns with aligned padding.
  *
  * @param array $columns Array of column data.
  * @return string Formatted columns with aligned padding.
  */
-function sql_analyzer_format_table_columns( array $columns ): string {
+function simple_sql_query_analyzer_format_table_columns( array $columns ): string {
 	if ( empty( $columns ) ) {
 		return '';
 	}
 
-	// Pass 1: Calculate maximum widths
+	// Pass 1: Calculate maximum widths.
 	$max_name_width = 0;
 	$max_type_width = 0;
 	$max_null_width = 0;
@@ -581,7 +558,7 @@ function sql_analyzer_format_table_columns( array $columns ): string {
 	$spacing = 4;
 	$output  = '';
 
-	// Pass 2: Format with padding
+	// Pass 2: Format with padding.
 	foreach ( $columns as $col ) {
 		$null_text = $col['null'] ? 'NULL' : 'NOT NULL';
 		$key_text  = $col['key'] ? 'KEY: ' . $col['key'] : '';
@@ -604,17 +581,17 @@ function sql_analyzer_format_table_columns( array $columns ): string {
 }
 
 /**
- * Format indexes with aligned padding
+ * Format indexes with aligned padding.
  *
  * @param array $indexes Array of index data.
  * @return string Formatted indexes with aligned padding.
  */
-function sql_analyzer_format_indexes( array $indexes ): string {
+function simple_sql_query_analyzer_format_indexes( array $indexes ): string {
 	if ( empty( $indexes ) ) {
 		return '';
 	}
 
-	// Pass 1: Calculate maximum widths
+	// Pass 1: Calculate maximum widths.
 	$max_name_width   = 0;
 	$max_type_width   = 0;
 	$max_column_width = 0;
@@ -629,7 +606,7 @@ function sql_analyzer_format_indexes( array $indexes ): string {
 	$spacing = 4;
 	$output  = '';
 
-	// Pass 2: Format with padding
+	// Pass 2: Format with padding.
 	foreach ( $indexes as $idx ) {
 		$type_text   = '(' . $idx['type'] . ')';
 		$unique_text = $idx['unique'] ? 'UNIQUE' : '';
@@ -652,24 +629,24 @@ function sql_analyzer_format_indexes( array $indexes ): string {
 }
 
 /**
- * Format multi-query output for LLM integration
+ * Format multi-query output for LLM integration.
  *
  * Creates a comprehensive report for multiple queries.
  *
  * @param array $query_results Array of query result objects.
  * @return string Formatted output for LLM export.
  */
-function sql_analyzer_format_multi_query_output( array $query_results ): string {
+function simple_sql_query_analyzer_format_multi_query_output( array $query_results ): string {
 	$output = '';
 
-	// Header
+	// Header.
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= "SQL QUERY ANALYSIS REPORT - MULTI-QUERY SESSION\n";
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= 'Generated: ' . current_time( 'mysql' ) . "\n";
 	$output .= 'Number of Queries: ' . count( $query_results ) . "\n";
 
-	// Environment Information
+	// Environment Information.
 	global $wpdb;
 	$db_version = $wpdb->db_version();
 	$db_type    = ( strpos( $db_version, 'MariaDB' ) !== false ) ? 'MariaDB' : 'MySQL';
@@ -680,7 +657,7 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 	$output .= 'Database Version: ' . $db_version . "\n";
 	$output .= "\n";
 
-	// Executive Summary
+	// Executive Summary.
 	$total_cost    = 0;
 	$total_time    = 0;
 	$slowest_index = null;
@@ -709,14 +686,14 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 	$output .= 'Total Execution Time: ' . number_format( $total_time, 3 ) . "s\n";
 	$output .= 'Total Estimated Cost: ' . number_format( (int) $total_cost, 0 ) . " (relative units)\n";
 
-	if ( $slowest_index !== null ) {
+	if ( null !== $slowest_index ) {
 		$slowest = $query_results[ $slowest_index ];
 		$output .= 'Slowest Query: ' . $slowest['label'] . ' (' . number_format( $slowest_time, 3 ) . "s)\n";
 	}
 
 	$output .= "\n";
 
-	// Individual query results
+	// Individual query results.
 	foreach ( $query_results as $index => $result ) {
 		$output .= str_repeat( '=', 80 ) . "\n";
 		$output .= 'QUERY ' . ( $index + 1 ) . ': ' . $result['label'] . "\n";
@@ -730,17 +707,17 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 		$execution_time = $result['execution_time'] ?? 0;
 		$output        .= 'Execution Time: ' . number_format( $execution_time, 3 ) . "s\n\n";
 
-		// Original query
+		// Original query.
 		$output .= str_repeat( '-', 80 ) . "\n";
 		$output .= "ORIGINAL QUERY:\n";
 		$output .= str_repeat( '-', 80 ) . "\n";
 		$output .= $result['query'] . "\n\n";
 
-		// Query type
-		$query_type = sql_analyzer_get_query_type( $result['query'] );
+		// Query type.
+		$query_type = simple_sql_query_analyzer_get_query_type( $result['query'] );
 		$output    .= 'Query Type: ' . $query_type . "\n\n";
 
-		// Execution plans
+		// Execution plans.
 		if ( ! empty( $result['analyze'] ) ) {
 			$output .= str_repeat( '-', 80 ) . "\n";
 			$output .= "EXECUTION PLAN (ACTUAL - ANALYZE):\n";
@@ -755,7 +732,7 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 			$output .= $result['explain'][0]['EXPLAIN'] . "\n\n";
 		}
 
-		// Table structures
+		// Table structures.
 		if ( ! empty( $result['tables'] ) ) {
 			$output .= str_repeat( '-', 80 ) . "\n";
 			$output .= "TABLE STRUCTURES:\n";
@@ -764,12 +741,12 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 			foreach ( $result['tables'] as $table ) {
 				$output .= "\nTable: " . $table['name'] . "\n";
 				$output .= str_repeat( '-', 40 ) . "\n";
-				$output .= sql_analyzer_format_table_columns( $table['columns'] );
+				$output .= simple_sql_query_analyzer_format_table_columns( $table['columns'] );
 			}
 			$output .= "\n";
 		}
 
-		// Indexes
+		// Indexes.
 		if ( ! empty( $result['indexes'] ) ) {
 			$output .= str_repeat( '-', 80 ) . "\n";
 			$output .= "INDEXES:\n";
@@ -777,7 +754,7 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 
 			foreach ( $result['indexes'] as $table_name => $indexes ) {
 				$output .= "\nTable: " . $table_name . "\n";
-				$output .= sql_analyzer_format_indexes( $indexes );
+				$output .= simple_sql_query_analyzer_format_indexes( $indexes );
 			}
 			$output .= "\n";
 		}
@@ -791,14 +768,14 @@ function sql_analyzer_format_multi_query_output( array $query_results ): string 
 }
 
 /**
- * Get query type
+ * Get query type.
  *
  * Determines the type of SQL query.
  *
  * @param string $query The SQL query.
  * @return string The query type (SELECT, INSERT, UPDATE, DELETE, etc.).
  */
-function sql_analyzer_get_query_type( string $query ): string {
+function simple_sql_query_analyzer_get_query_type( string $query ): string {
 	$upper = strtoupper( trim( $query ) );
 	$upper = preg_replace( '/^(\/\*.*?\*\/)*/s', '', $upper );
 
@@ -816,7 +793,7 @@ function sql_analyzer_get_query_type( string $query ): string {
 }
 
 /**
- * Format output for LLM integration
+ * Format output for LLM integration.
  *
  * Creates a comprehensive, well-formatted analysis report.
  *
@@ -828,16 +805,16 @@ function sql_analyzer_get_query_type( string $query ): string {
  * @param bool   $include_analyze Whether ANALYZE was requested.
  * @return string Formatted output.
  */
-function sql_analyzer_format_output( string $query, array $explain, array $tables, array $indexes, array $analyze = array(), bool $include_analyze = false ): string {
+function simple_sql_query_analyzer_format_output( string $query, array $explain, array $tables, array $indexes, array $analyze = array(), bool $include_analyze = false ): string {
 	$output = '';
 
-	// Header
+	// Header.
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= "SQL QUERY ANALYSIS REPORT\n";
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= 'Generated: ' . current_time( 'mysql' ) . "\n";
 	$output .= 'Include ANALYZE: ' . ( $include_analyze ? 'Yes' : 'No' ) . "\n";
-	// Environment Information
+	// Environment Information.
 	global $wpdb;
 	$db_version = $wpdb->db_version();
 	$db_type    = ( strpos( $db_version, 'MariaDB' ) !== false ) ? 'MariaDB' : 'MySQL';
@@ -848,26 +825,26 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 	$output .= 'Database Version: ' . $db_version . "\n";
 	$output .= "\n";
 
-	// Original Query
+	// Original Query.
 	$output .= str_repeat( '-', 80 ) . "\n";
 	$output .= "ORIGINAL QUERY:\n";
 	$output .= str_repeat( '-', 80 ) . "\n";
 	$output .= $query . "\n\n";
 
-	// EXPLAIN Output
+	// EXPLAIN Output.
 	$output .= str_repeat( '-', 80 ) . "\n";
 	$output .= "EXECUTION PLAN (EXPLAIN):\n";
 	$output .= str_repeat( '-', 80 ) . "\n";
 
 	if ( ! empty( $explain ) ) {
-		// Check if this is EXPLAIN FORMAT=TREE output (single column, tree format)
+		// Check if this is EXPLAIN FORMAT=TREE output (single column, tree format).
 		if ( 1 === count( $explain ) && 1 === count( reset( $explain ) ) ) {
-			// Get the tree value directly and output as-is
+			// Get the tree value directly and output as-is.
 			$first_row  = reset( $explain );
 			$tree_value = reset( $first_row );
 			$output    .= (string) $tree_value . "\n\n";
 		} else {
-			// Traditional EXPLAIN format with multiple columns/rows
+			// Traditional EXPLAIN format with multiple columns/rows.
 			foreach ( $explain as $row ) {
 				foreach ( $row as $key => $value ) {
 					$output .= sprintf( "%-20s: %s\n", $key, $value ?? 'NULL' );
@@ -879,20 +856,20 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 		$output .= "No execution plan data available.\n\n";
 	}
 
-	// ANALYZE Output
+	// ANALYZE Output.
 	if ( ! empty( $analyze ) ) {
 		$output .= str_repeat( '-', 80 ) . "\n";
 		$output .= "QUERY EXECUTION ANALYSIS (ANALYZE):\n";
 		$output .= str_repeat( '-', 80 ) . "\n";
 
-		// Check if this is tree format output
+		// Check if this is tree format output.
 		if ( 1 === count( $analyze ) && 1 === count( reset( $analyze ) ) ) {
-			// Get the tree value directly and output as-is
+			// Get the tree value directly and output as-is.
 			$first_row  = reset( $analyze );
 			$tree_value = reset( $first_row );
 			$output    .= (string) $tree_value . "\n\n";
 		} else {
-			// Traditional ANALYZE format
+			// Traditional ANALYZE format.
 			foreach ( $analyze as $row ) {
 				foreach ( $row as $key => $value ) {
 					$output .= sprintf( "%-20s: %s\n", $key, $value ?? 'NULL' );
@@ -902,7 +879,7 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 		}
 	}
 
-	// Database Structures
+	// Database Structures.
 	$output .= str_repeat( '-', 80 ) . "\n";
 	$output .= "DATABASE STRUCTURES:\n";
 	$output .= str_repeat( '-', 80 ) . "\n";
@@ -936,7 +913,7 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 		$output .= "\n";
 	}
 
-	// Indexes
+	// Indexes.
 	$output .= str_repeat( '-', 80 ) . "\n";
 	$output .= "INDEX INFORMATION:\n";
 	$output .= str_repeat( '-', 80 ) . "\n";
@@ -961,7 +938,7 @@ function sql_analyzer_format_output( string $query, array $explain, array $table
 		$output .= "\n";
 	}
 
-	// Footer
+	// Footer.
 	$output .= str_repeat( '=', 80 ) . "\n";
 	$output .= "END OF REPORT\n";
 	$output .= str_repeat( '=', 80 ) . "\n";
