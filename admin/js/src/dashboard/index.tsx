@@ -8,9 +8,41 @@ import { ResultsDisplay } from "./components/ResultsDisplay";
 import { Alert } from "./components/Alert";
 import type { AnalysisResponse, QueryInput } from "./types";
 
+const STORAGE_KEY = "simple-sql-query-analyzer-state";
+
+interface StoredState {
+  queries: QueryInput[];
+  includeAnalyze: boolean;
+}
+
+const saveStateToStorage = (queries: QueryInput[], includeAnalyze: boolean) => {
+  try {
+    const state: StoredState = { queries, includeAnalyze };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+};
+
+const loadStateFromStorage = (): StoredState | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Return null if parsing fails
+  }
+  return null;
+};
+
+const storedState = loadStateFromStorage();
+
 const Dashboard = () => {
-  const [queries, setQueries] = useState<QueryInput[]>([{ id: "1", label: "", query: "" }]);
-  const [includeAnalyze, setIncludeAnalyze] = useState(false);
+  const [queries, setQueries] = useState<QueryInput[]>(
+    storedState?.queries?.length ? storedState.queries : [{ id: "1", label: "", query: "" }]
+  );
+  const [includeAnalyze, setIncludeAnalyze] = useState(storedState?.includeAnalyze ?? false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<AnalysisResponse | null>(null);
@@ -41,7 +73,9 @@ const Dashboard = () => {
       });
 
       setResponse(data);
-      if (!data.success) {
+      if (data.success) {
+        saveStateToStorage(queries, includeAnalyze);
+      } else {
         setError(data.message);
       }
     } catch (err) {
@@ -60,6 +94,7 @@ const Dashboard = () => {
     setIncludeAnalyze(false);
     setError(null);
     setResponse(null);
+    localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const handleDismissError = useCallback(() => {

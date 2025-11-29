@@ -22,7 +22,7 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-      <div className="bg-gray-50 px-6 py-1 border-b border-gray-200 flex items-center justify-between">
+      <div className="bg-gray-50 px-6 py-1 border-b border-gray-200 flex items-center gap-4">
         <h3 className="text-lg font-semibold text-gray-900 m-0">
           {__("SQL Query Analysis Report", "simple-sql-query-analyzer")}
         </h3>
