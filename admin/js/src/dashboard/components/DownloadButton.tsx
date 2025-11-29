@@ -8,7 +8,7 @@ interface DownloadButtonProps {
 
 export function DownloadButton({
   content,
-  label = __("Download", "sql-analyzer"),
+  label = __("Download", "simple-sql-query-analyzer"),
 }: DownloadButtonProps) {
   const [downloading, setDownloading] = useState(false);
 
@@ -45,7 +45,7 @@ export function DownloadButton({
 
       setDownloading(false);
     } catch {
-      console.error(__("Failed to download file", "sql-analyzer"));
+      console.error(__("Failed to download file", "simple-sql-query-analyzer"));
       setDownloading(false);
     }
   };
@@ -56,7 +56,7 @@ export function DownloadButton({
       disabled={downloading}
       className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
     >
-      <span>{downloading ? __("Downloading...", "sql-analyzer") : label}</span>
+      <span>{downloading ? __("Downloading...", "simple-sql-query-analyzer") : label}</span>
     </button>
   );
 }

@@ -22,33 +22,37 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-      <div className="bg-gray-50 px-6 py-1 border-b border-gray-200">
+      <div className="bg-gray-50 px-6 py-1 border-b border-gray-200 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 m-0">
-          {__("SQL Query Analysis Report", "sql-analyzer")}
+          {__("SQL Query Analysis Report", "simple-sql-query-analyzer")}
         </h3>
+        <CopyButton
+          content={complete_output}
+          label={__("Copy to LLM", "simple-sql-query-analyzer")}
+        />
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button
           onClick={() => setActiveTab("visual")}
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
             activeTab === "visual"
               ? "border-blue-600 text-blue-600 bg-blue-50"
-              : "border-transparent text-gray-700 hover:text-gray-900"
+              : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50"
           }`}
         >
-          {__("Visual Analysis", "sql-analyzer")}
+          {__("Visual Analysis", "simple-sql-query-analyzer")}
         </button>
         <button
           onClick={() => setActiveTab("llm")}
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
             activeTab === "llm"
               ? "border-blue-600 text-blue-600 bg-blue-50"
-              : "border-transparent text-gray-700 hover:text-gray-900"
+              : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50"
           }`}
         >
-          {__("LLM Export", "sql-analyzer")}
+          {__("LLM Export", "simple-sql-query-analyzer")}
         </button>
       </div>
 
@@ -79,10 +83,10 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
               <p className="text-xs text-blue-800">
-                💡 <strong>{__("Tip:", "sql-analyzer")}</strong>{" "}
+                💡 <strong>{__("Tip:", "simple-sql-query-analyzer")}</strong>{" "}
                 {__(
                   "Copy the text below and paste it into your LLM chat for comprehensive query analysis and optimization suggestions.",
-                  "sql-analyzer",
+                  "simple-sql-query-analyzer",
                 )}
               </p>
             </div>
@@ -92,8 +96,14 @@ export function AnalysisReport({ response }: AnalysisReportProps) {
               </pre>
             </div>
             <div className="flex gap-3">
-              <CopyButton content={complete_output} label="Copy for LLM" />
-              <DownloadButton content={complete_output} label="Download Report" />
+              <CopyButton
+                content={complete_output}
+                label={__("Copy for LLM", "simple-sql-query-analyzer")}
+              />
+              <DownloadButton
+                content={complete_output}
+                label={__("Download Report", "simple-sql-query-analyzer")}
+              />
             </div>
           </div>
         )}

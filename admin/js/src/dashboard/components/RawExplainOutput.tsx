@@ -1,4 +1,5 @@
 import { useState } from "@wordpress/element";
+import { __ } from "@wordpress/i18n";
 
 interface RawExplainOutputProps {
   data: Array<Record<string, unknown>>;
@@ -13,7 +14,9 @@ export function RawExplainOutput({ data, isAnalyze = false }: RawExplainOutputPr
     return null;
   }
 
-  const title = isAnalyze ? "Raw EXPLAIN ANALYZE Output" : "Raw EXPLAIN Output";
+  const title = isAnalyze
+    ? __("Raw EXPLAIN ANALYZE Output", "simple-sql-query-analyzer")
+    : __("Raw EXPLAIN Output", "simple-sql-query-analyzer");
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -57,7 +60,9 @@ function CopyRawButton({ content }: CopyRawButtonProps) {
       onClick={handleCopy}
       className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
     >
-      {copied ? "✓ Copied!" : "Copy Output"}
+      {copied
+        ? __("Copied!", "simple-sql-query-analyzer")
+        : __("Copy Output", "simple-sql-query-analyzer")}
     </button>
   );
 }

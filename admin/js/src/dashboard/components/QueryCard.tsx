@@ -1,6 +1,7 @@
 import { useState } from "@wordpress/element";
 import { EnhancedExplainTree } from "./EnhancedExplainTree";
 import { TableInfo } from "./TableInfo";
+import { __ } from "@wordpress/i18n";
 import type { QueryResult } from "../types";
 
 interface QueryCardProps {
@@ -19,7 +20,9 @@ export function QueryCard({ query, index }: QueryCardProps) {
           <h3 className="text-sm font-semibold text-red-900">{query.label}</h3>
         </div>
         <div className="p-4">
-          <p className="text-sm text-red-700">Error: {query.error}</p>
+          <p className="text-sm text-red-700">
+            {__("Error:", "simple-sql-query-analyzer")} {query.error}
+          </p>
           <pre className="mt-3 bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto text-gray-700 max-h-32">
             {query.query}
           </pre>
@@ -35,10 +38,12 @@ export function QueryCard({ query, index }: QueryCardProps) {
         className="w-full text-left px-4 py-3 bg-blue-50 border-b border-gray-200 hover:bg-blue-100 transition-colors flex items-center justify-between"
       >
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">{query.label}</h3>
-          <p className="text-xs text-gray-600 mt-0.5">
-            {query.execution_time ? `${(query.execution_time * 1000).toFixed(1)}ms` : "Pending"}
-          </p>
+          <h3 className="text-sm font-semibold text-gray-900 m-0">
+            {query.label}
+            <span className="text-xs text-gray-600 ml-2">
+              ({query.execution_time ? `${(query.execution_time * 1000).toFixed(1)}ms` : __("Pending", 'simple-sql-query-analyzer')})
+            </span>
+          </h3>
         </div>
         <span className="text-xl">{isExpanded ? "▼" : "▶"}</span>
       </button>
@@ -47,7 +52,9 @@ export function QueryCard({ query, index }: QueryCardProps) {
         <div className="p-4 space-y-4">
           {/* Query Text */}
           <div>
-            <h4 className="text-xs font-semibold text-gray-700 mb-2">Query</h4>
+            <h4 className="text-xs font-semibold text-gray-700 mb-2">
+              {__("Query", "simple-sql-query-analyzer")}
+            </h4>
             <pre className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto text-gray-700 max-h-32">
               {query.query}
             </pre>

@@ -1,4 +1,5 @@
 import { useState } from "@wordpress/element";
+import { __, _n, sprintf } from "@wordpress/i18n";
 import type { Table, Index } from "../types";
 
 interface TableInfoProps {
@@ -49,7 +50,8 @@ export function TableInfo({ tables, indexes = {} }: TableInfoProps) {
   return (
     <div>
       <h4 className="text-xs font-semibold text-gray-700 mb-3">
-        Tables {tables.length > 1 && <span className="text-gray-500">({tables.length})</span>}
+        {__("Tables", "simple-sql-query-analyzer")}{" "}
+        {tables.length > 1 && <span className="text-gray-500">({tables.length})</span>}
       </h4>
 
       <div className="space-y-3">
@@ -69,11 +71,17 @@ export function TableInfo({ tables, indexes = {} }: TableInfoProps) {
                     {table.name}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {table.columns.length} {table.columns.length === 1 ? "col" : "cols"}
+                    {sprintf(
+                      _n("%d col", "%d cols", table.columns.length, "simple-sql-query-analyzer"),
+                      table.columns.length
+                    )}
                   </span>
                   {tableIndexes.length > 0 && (
                     <span className="text-xs text-gray-500">
-                      {tableIndexes.length} {tableIndexes.length === 1 ? "idx" : "idxs"}
+                      {sprintf(
+                        _n("%d idx", "%d idxs", tableIndexes.length, "simple-sql-query-analyzer"),
+                        tableIndexes.length
+                      )}
                     </span>
                   )}
                 </div>
@@ -85,22 +93,24 @@ export function TableInfo({ tables, indexes = {} }: TableInfoProps) {
                 <div className="px-3 py-2 space-y-3 bg-white border-t border-gray-200">
                   {/* Columns Section */}
                   <div>
-                    <h5 className="text-xs font-semibold text-gray-700 mb-2">Columns</h5>
+                    <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                      {__("Columns", "simple-sql-query-analyzer")}
+                    </h5>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-gray-200">
                             <th className="text-left px-2 py-1 text-gray-600 font-semibold">
-                              Name
+                              {__("Name", "simple-sql-query-analyzer")}
                             </th>
                             <th className="text-left px-2 py-1 text-gray-600 font-semibold">
-                              Type
+                              {__("Type", "simple-sql-query-analyzer")}
                             </th>
                             <th className="text-left px-2 py-1 text-gray-600 font-semibold">
-                              Constraints
+                              {__("Constraints", "simple-sql-query-analyzer")}
                             </th>
                             <th className="text-left px-2 py-1 text-gray-600 font-semibold">
-                              Default
+                              {__("Default", "simple-sql-query-analyzer")}
                             </th>
                           </tr>
                         </thead>
@@ -116,7 +126,7 @@ export function TableInfo({ tables, indexes = {} }: TableInfoProps) {
                                   {column.key && getKeyBadge(column.key)}
                                   {!column.null && (
                                     <span className="inline-block px-1.5 py-0.5 border border-green-300 text-green-700 text-xs rounded">
-                                      NOT NULL
+                                      {__("NOT NULL", "simple-sql-query-analyzer")}
                                     </span>
                                   )}
                                 </div>
@@ -134,7 +144,9 @@ export function TableInfo({ tables, indexes = {} }: TableInfoProps) {
                   {/* Indexes Section */}
                   {tableIndexes.length > 0 && (
                     <div className="pt-2 border-t border-gray-200">
-                      <h5 className="text-xs font-semibold text-gray-700 mb-2">Indexes</h5>
+                      <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                        {__("Indexes", "simple-sql-query-analyzer")}
+                      </h5>
                       <div className="space-y-1.5">
                         {tableIndexes
                           .reduce(
@@ -174,7 +186,7 @@ export function TableInfo({ tables, indexes = {} }: TableInfoProps) {
                                   </span>
                                   {idx.unique && (
                                     <span className="text-xs text-purple-700 bg-purple-100 px-1 rounded">
-                                      UNIQUE
+                                      {__("UNIQUE", "simple-sql-query-analyzer")}
                                     </span>
                                   )}
                                 </div>

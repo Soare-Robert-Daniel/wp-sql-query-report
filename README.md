@@ -8,7 +8,7 @@ WordPress plugin to analyze SQL queries with EXPLAIN plans and export reports fo
 
 ## Install
 
-1. Upload `sql-analyzer` folder to `/wp-content/plugins/`
+1. Upload `simple-sql-query-analyzer` folder to `/wp-content/plugins/`
 2. Activate in WordPress admin
 3. Go to **Tools > SQL Analyzer**
 
@@ -41,7 +41,7 @@ composer phpstan       # Static analysis
 ## REST API
 
 ```
-POST /wp-json/sql-analyzer/v1/analyze
+POST /wp-json/simple-sql-query-analyzer/v1/analyze
 ```
 
 ```json

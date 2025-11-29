@@ -20,20 +20,20 @@ export function EmptyState() {
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">
-          {__("No Analysis Yet", "sql-analyzer")}
+          {__("No Analysis Yet", "simple-sql-query-analyzer")}
         </h3>
         <p className="text-sm text-gray-600 mb-4">
           {__(
             'Enter a SQL query on the left and click "Analyze Query" to see results here.',
-            "sql-analyzer",
+            "simple-sql-query-analyzer",
           )}
         </p>
         <div className="bg-blue-50 border border-blue-200 rounded p-3">
           <p className="text-xs text-blue-800">
-            💡 <strong>{__("Tip:", "sql-analyzer")}</strong>{" "}
+            💡 <strong>{__("Tip:", "simple-sql-query-analyzer")}</strong>{" "}
             {__(
               "Use SELECT queries only. The analyzer will show you execution plans, table structures, and index information.",
-              "sql-analyzer",
+              "simple-sql-query-analyzer",
             )}
           </p>
         </div>

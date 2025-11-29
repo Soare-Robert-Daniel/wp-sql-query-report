@@ -7,9 +7,8 @@
  * The formatted output can be easily copied and pasted into LLM chat applications.
  *
  * Plugin Name:     Simple SQL Query Analyzer
- * Plugin URI:      https://github.com/soare-robert-daniel/sql-analyzer
  * Description:     Analyze SQL queries with EXPLAIN/ANALYZE, view database structures, and export for LLM integration.
- * Author:          Soare Robert-Daniel
+ * Author:          soarerobertdaniel7
  * Text Domain:     simple-sql-query-analyzer
  * Version:         1.0.0
  * Requires PHP:    7.4
@@ -17,9 +16,8 @@
  * License:         GPLv2 or later
  *
  * @package         simple-sql-query-analyzer
- * @author          Soare Robert-Daniel <soare.robert.daniel@protonmail.com>
+ * @author          soarerobertdaniel7
  * @license         GPL-2.0-or-later
- * @link            https://github.com/soare-robert-daniel/sql-analyzer
  */
 
 // Exit if accessed directly.
@@ -33,13 +31,13 @@ define( 'SIMPLE_SQL_QUERY_ANALYZER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SIMPLE_SQL_QUERY_ANALYZER_URL', plugin_dir_url( __FILE__ ) );
 
 add_action( 'admin_menu', 'simple_sql_query_analyzer_register_menu' );
-add_action( 'admin_enqueue_scripts', 'simple_sql_query_analyzer_enqueue_assets' );
 add_action( 'rest_api_init', 'simple_sql_query_analyzer_register_rest_endpoint' );
 
 /**
  * Register the admin menu.
  *
- * Creates a submenu under "Tools" for the SQL Analyzer.
+ * Creates a submenu under "Tools" for the SQL Analyzer and hooks
+ * the asset enqueue function to the specific page load action.
  *
  * @return void
  */
@@ -48,7 +46,7 @@ function simple_sql_query_analyzer_register_menu(): void {
 		return;
 	}
 
-	add_submenu_page(
+	$hook = add_submenu_page(
 		'tools.php',
 		__( 'SQL Analyzer', 'simple-sql-query-analyzer' ),
 		__( 'SQL Analyzer', 'simple-sql-query-analyzer' ),
@@ -56,6 +54,15 @@ function simple_sql_query_analyzer_register_menu(): void {
 		'simple-sql-query-analyzer',
 		'simple_sql_query_analyzer_render_page'
 	);
+
+	if ( $hook ) {
+		add_action(
+			"load-{$hook}",
+			function () {
+				add_action( 'admin_enqueue_scripts', 'simple_sql_query_analyzer_enqueue_assets' );
+			}
+		);
+	}
 }
 
 /**
@@ -80,19 +87,16 @@ function simple_sql_query_analyzer_render_page(): void {
  * Enqueue admin scripts and styles.
  *
  * Enqueues CSS and JavaScript files for the admin page.
+ * This function is hooked to the page-specific load action,
+ * so no hook suffix check is needed.
  *
- * @param string $hook_suffix The current admin page hook.
  * @return void
  */
-function simple_sql_query_analyzer_enqueue_assets( string $hook_suffix ): void {
-	if ( false === strpos( $hook_suffix, 'simple-sql-query-analyzer' ) ) {
-		return;
-	}
-
+function simple_sql_query_analyzer_enqueue_assets(): void {
 	$dashboard_asset = include SIMPLE_SQL_QUERY_ANALYZER_DIR . 'build/dashboard.asset.php';
 
 	wp_enqueue_script(
-		'sql-analyzer-dashboard',
+		'simple-sql-query-analyzer-dashboard',
 		SIMPLE_SQL_QUERY_ANALYZER_URL . 'build/dashboard.js',
 		$dashboard_asset['dependencies'],
 		$dashboard_asset['version'],
@@ -100,7 +104,7 @@ function simple_sql_query_analyzer_enqueue_assets( string $hook_suffix ): void {
 	);
 
 	wp_enqueue_style(
-		'sql-analyzer-dashboard-style',
+		'simple-sql-query-analyzer-dashboard-style',
 		SIMPLE_SQL_QUERY_ANALYZER_URL . 'build/dashboard.css',
 		array(),
 		$dashboard_asset['version']
@@ -109,12 +113,12 @@ function simple_sql_query_analyzer_enqueue_assets( string $hook_suffix ): void {
 	$localized_data = array(
 		'restRoot'        => rest_url(),
 		'restNonce'       => wp_create_nonce( 'wp_rest' ),
-		'analyzeEndpoint' => rest_url( 'sql-analyzer/v1/analyze' ),
+		'analyzeEndpoint' => rest_url( 'simple-sql-query-analyzer/v1/analyze' ),
 		'version'         => SIMPLE_SQL_QUERY_ANALYZER_VERSION,
 	);
 
 	wp_localize_script(
-		'sql-analyzer-dashboard',
+		'simple-sql-query-analyzer-dashboard',
 		'sqlAnalyzerData',
 		$localized_data
 	);
@@ -129,7 +133,7 @@ function simple_sql_query_analyzer_enqueue_assets( string $hook_suffix ): void {
  */
 function simple_sql_query_analyzer_register_rest_endpoint(): void {
 	register_rest_route(
-		'sql-analyzer/v1',
+		'simple-sql-query-analyzer/v1',
 		'/analyze',
 		array(
 			'methods'             => 'POST',
@@ -420,6 +424,57 @@ function simple_sql_query_analyzer_analyze_queries( array $query_inputs, bool $i
 }
 
 /**
+ * Execute EXPLAIN FORMAT=TREE on a SQL query.
+ *
+ * Runs MySQL's EXPLAIN statement with FORMAT=TREE to provide a user-friendly,
+ * tree-structured execution plan with cost estimates. This format shows the
+ * query execution flow hierarchically, making it easier to understand how
+ * MySQL will process the query.
+ *
+ * @since 1.0.0
+ *
+ * @param string $query The SQL SELECT query to analyze. Must be a valid SELECT statement.
+ * @return array<int, array<string, string>> Array of EXPLAIN results. Each element contains
+ *                                           an 'EXPLAIN' key with the tree-formatted plan.
+ *                                           Returns empty array if EXPLAIN fails.
+ */
+function simple_sql_query_analyzer_execute_explain( string $query ): array {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Query is validated before reaching this function via simple_sql_query_analyzer_validate_query().
+	$results = $wpdb->get_results( 'EXPLAIN FORMAT=TREE ' . $query, ARRAY_A );
+
+	return $results ?? array();
+}
+
+/**
+ * Execute EXPLAIN ANALYZE on a SQL query.
+ *
+ * Runs MySQL's EXPLAIN ANALYZE statement to execute the query and provide
+ * real-time execution metrics. Available in MySQL 8.0.18+, this actually
+ * runs the query and reports actual execution times, row counts, and loop
+ * iterations alongside the estimated values.
+ *
+ * WARNING: This executes the query, so it will consume resources and time
+ * proportional to the query's complexity and the data size.
+ *
+ * @since 1.0.0
+ *
+ * @param string $query The SQL SELECT query to analyze. Must be a valid SELECT statement.
+ * @return array<int, array<string, string>> Array of ANALYZE results. Each element contains
+ *                                           an 'EXPLAIN' key with actual vs estimated metrics.
+ *                                           Returns empty array if ANALYZE fails or is unsupported.
+ */
+function simple_sql_query_analyzer_execute_analyze( string $query ): array {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Query is validated before reaching this function via simple_sql_query_analyzer_validate_query().
+	$results = $wpdb->get_results( 'EXPLAIN ANALYZE ' . $query, ARRAY_A );
+
+	return $results ?? array();
+}
+
+/**
  * Analyze SQL query.
  *
  * Executes EXPLAIN/ANALYZE and gathers database information.
@@ -438,15 +493,11 @@ function simple_sql_query_analyzer_analyze_query( string $query, bool $include_a
 		throw new \Exception( wp_kses_post( __( 'No tables found in query.', 'simple-sql-query-analyzer' ) ) );
 	}
 
-	// Execute EXPLAIN with FORMAT=TREE for user-friendly output with cost estimates.
-	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-	$explain_results = $wpdb->get_results( 'EXPLAIN FORMAT=TREE ' . $query, ARRAY_A );
+	$explain_results = simple_sql_query_analyzer_execute_explain( $query );
 
-	// Execute ANALYZE if requested (MySQL 8.0.18+ provides real-time execution metrics).
 	$analyze_results = array();
 	if ( $include_analyze ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$analyze_results = $wpdb->get_results( 'EXPLAIN ANALYZE ' . $query, ARRAY_A );
+		$analyze_results = simple_sql_query_analyzer_execute_analyze( $query );
 	}
 
 	$table_info = array();

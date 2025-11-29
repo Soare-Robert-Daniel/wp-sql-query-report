@@ -70,7 +70,7 @@ export function QueryForm({
         disabled={loading}
         className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {__("+Add Another Query", "sql-analyzer")}
+        {__("+Add Another Query", "simple-sql-query-analyzer")}
       </button>
 
       {/* Options */}
@@ -85,7 +85,10 @@ export function QueryForm({
             className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
           />
           <label htmlFor="include-analyze" className="ml-2 text-sm text-gray-700 cursor-pointer">
-            {__("Include ANALYZE results for all queries", "sql-analyzer")}
+            {__("Include ANALYZE results for all queries", "simple-sql-query-analyzer")}
+            <span className="ml-1 text-xs text-gray-500">
+              ({__("Available in MySQL 8.0 and later", "simple-sql-query-analyzer")})
+            </span>
           </label>
         </div>
 
@@ -102,7 +105,7 @@ export function QueryForm({
                     "Analyzing %d Query...",
                     "Analyzing %d Queries...",
                     queries.length,
-                    "sql-analyzer",
+                    "simple-sql-query-analyzer",
                   ),
                   queries.length,
                 )
@@ -111,7 +114,7 @@ export function QueryForm({
                     "Analyze Query (%d)",
                     "Analyze All Queries (%d)",
                     queries.length,
-                    "sql-analyzer",
+                    "simple-sql-query-analyzer",
                   ),
                   queries.length,
                 )}
@@ -122,7 +125,7 @@ export function QueryForm({
             disabled={loading || !hasValidQueries}
             className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
-            {__("Clear All", "sql-analyzer")}
+            {__("Clear All", "simple-sql-query-analyzer")}
           </button>
         </div>
       </div>

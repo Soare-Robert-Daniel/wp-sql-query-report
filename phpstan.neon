@@ -1,7 +1,7 @@
 parameters:
 	level: 8
 	paths:
-		- sql-analyzer.php
+		- simple-sql-query-analyzer.php
 		- includes/
 	ignoreErrors:
 		- message: '#Constant DB_NAME not found#'

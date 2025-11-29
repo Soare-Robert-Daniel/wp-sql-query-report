@@ -1,5 +1,5 @@
 {
-  "name": "sql-analyzer",
+  "name": "simple-sql-query-analyzer",
   "version": "0.1.0",
   "main": "Gruntfile.js",
   "author": "Robert Daniel",

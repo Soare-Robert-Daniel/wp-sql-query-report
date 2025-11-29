@@ -18,7 +18,7 @@ const Dashboard = () => {
   const analyzeQueries = useCallback(async () => {
     const validQueries = queries.filter((q) => q.query.trim());
     if (validQueries.length === 0) {
-      setError(__("Please enter at least one SQL query", "sql-analyzer"));
+      setError(__("Please enter at least one SQL query", "simple-sql-query-analyzer"));
       return;
     }
 
@@ -28,12 +28,12 @@ const Dashboard = () => {
 
     try {
       const data: AnalysisResponse = await apiFetch({
-        path: "/sql-analyzer/v1/analyze",
+        path: "/simple-sql-query-analyzer/v1/analyze",
         method: "POST",
         data: {
           queries: validQueries.map((q) => ({
             id: q.id,
-            label: q.label || sprintf(__("Query %d", "sql-analyzer"), queries.indexOf(q) + 1),
+            label: q.label || sprintf(__("Query %d", "simple-sql-query-analyzer"), queries.indexOf(q) + 1),
             query: q.query.trim(),
           })),
           include_analyze: includeAnalyze,
@@ -48,7 +48,7 @@ const Dashboard = () => {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : __("An error occurred while analyzing the queries", "sql-analyzer");
+          : __("An error occurred while analyzing the queries", "simple-sql-query-analyzer");
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -67,17 +67,17 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="sql-analyzer-app bg-gray-100 min-h-screen px-4">
+    <div className="simple-sql-query-analyzer-app bg-gray-100 min-h-screen px-4">
       <div className="">
         {/* Header - Full Width */}
         <div className="mb-4">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {__("SQL Analyzer", "sql-analyzer")}
+            {__("SQL Analyzer", "simple-sql-query-analyzer")}
           </h1>
           <p className="text-gray-600">
             {__(
               "Analyze your SQL queries with detailed EXPLAIN results and database structure information",
-              "sql-analyzer",
+              "simple-sql-query-analyzer",
             )}
           </p>
         </div>
@@ -103,7 +103,7 @@ const Dashboard = () => {
                   <div className="animate-spin h-4 w-4 mr-2 border-2 border-blue-600 border-t-transparent rounded-full" />
                   <span className="text-sm text-gray-700">
                     {sprintf(
-                      __("Analyzing %d queries...", "sql-analyzer"),
+                      __("Analyzing %d queries...", "simple-sql-query-analyzer"),
                       queries.filter((q) => q.query.trim()).length,
                     )}
                   </span>
@@ -114,7 +114,7 @@ const Dashboard = () => {
             {error && (
               <Alert
                 type="error"
-                title={__("Error", "sql-analyzer")}
+                title={__("Error", "simple-sql-query-analyzer")}
                 message={error}
                 onDismiss={handleDismissError}
               />
@@ -125,13 +125,13 @@ const Dashboard = () => {
               (response.success ? (
                 <Alert
                   type="success"
-                  title={__("Success", "sql-analyzer")}
+                  title={__("Success", "simple-sql-query-analyzer")}
                   message={response.message}
                 />
               ) : (
                 <Alert
                   type="error"
-                  title={__("Error", "sql-analyzer")}
+                  title={__("Error", "simple-sql-query-analyzer")}
                   message={response.message}
                   onDismiss={handleDismissError}
                 />

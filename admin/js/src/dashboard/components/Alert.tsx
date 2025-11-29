@@ -29,7 +29,7 @@ export function Alert({ type, title, message, onDismiss }: AlertProps) {
           <button
             onClick={onDismiss}
             className={`${buttonHoverColor} ml-2 p-1 rounded transition-colors`}
-            aria-label={__("Dismiss", "sql-analyzer")}
+            aria-label={__("Dismiss", "simple-sql-query-analyzer")}
           >
             <span className="text-lg leading-none">×</span>
           </button>

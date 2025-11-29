@@ -9,7 +9,7 @@ module.exports = function( grunt ) {
 
 		addtextdomain: {
 			options: {
-				textdomain: 'sql-analyzer',
+				textdomain: 'simple-sql-query-analyzer',
 			},
 			update_all_domains: {
 				options: {
@@ -32,8 +32,8 @@ module.exports = function( grunt ) {
 				options: {
 					domainPath: '/languages',
 					exclude: [ '\.git/*', 'bin/*', 'node_modules/*', 'tests/*' ],
-					mainFile: 'sql-analyzer.php',
-					potFilename: 'sql-analyzer.pot',
+					mainFile: 'simple-sql-query-analyzer.php',
+					potFilename: 'simple-sql-query-analyzer.pot',
 					potHeaders: {
 						poedit: true,
 						'x-poedit-keywordslist': true

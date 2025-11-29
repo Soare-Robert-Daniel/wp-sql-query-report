@@ -1,4 +1,5 @@
 import { useState } from "@wordpress/element";
+import { __, sprintf } from "@wordpress/i18n";
 
 interface TreeLine {
   depth: number;
@@ -22,7 +23,7 @@ export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedE
   if (!rawExplain || rawExplain.trim().length === 0) {
     return (
       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-xs">
-        No execution plan available
+        {__("No execution plan available", "simple-sql-query-analyzer")}
       </div>
     );
   }
@@ -30,7 +31,7 @@ export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedE
   if (lines.length === 0) {
     return (
       <div className="p-3 bg-gray-50 border border-gray-200 rounded text-gray-600 text-xs">
-        Could not parse execution plan
+        {__("Could not parse execution plan", "simple-sql-query-analyzer")}
       </div>
     );
   }
@@ -53,7 +54,9 @@ export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedE
     <div className="bg-white border border-gray-200 rounded-lg p-4">
       <div className="mb-3 pb-2 border-b border-gray-200">
         <h3 className="text-xs font-semibold text-gray-900">
-          {isAnalyze ? "Execution Plan (Actual)" : "Execution Plan (Estimated)"}
+          {isAnalyze
+            ? __("Execution Plan (Actual)", "simple-sql-query-analyzer")
+            : __("Execution Plan (Estimated)", "simple-sql-query-analyzer")}
         </h3>
       </div>
 
@@ -63,15 +66,19 @@ export function EnhancedExplainTree({ rawExplain, isAnalyze = false }: EnhancedE
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
-                Cost
+                {__("Cost", "simple-sql-query-analyzer")}
               </span>
-              <span className="text-gray-600">Query cost (relative units)</span>
+              <span className="text-gray-600">
+                {__("Query cost (relative units)", "simple-sql-query-analyzer")}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <span className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
-                Rows
+                {__("Rows", "simple-sql-query-analyzer")}
               </span>
-              <span className="text-gray-600">Estimated output rows</span>
+              <span className="text-gray-600">
+                {__("Estimated output rows", "simple-sql-query-analyzer")}
+              </span>
             </div>
           </div>
         </div>
@@ -301,7 +308,11 @@ function renderTreeLines(
             className="py-0.5 px-1 text-xs text-gray-500 italic group-hover:text-gray-700"
             style={{ paddingLeft: `${line.depth * 16 + 6 + 16 + 4}px` }}
           >
-            ... {line.children.length} more
+            {sprintf(
+              /* translators: %d is the number of hidden child nodes */
+              __("... %d more", "simple-sql-query-analyzer"),
+              line.children.length
+            )}
           </div>
         )}
       </div>

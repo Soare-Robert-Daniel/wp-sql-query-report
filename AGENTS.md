@@ -16,10 +16,10 @@ composer lint:fix      # Auto-fix
 
 ## Structure
 
--   **Main file:** `sql-analyzer.php` (all PHP logic)
+-   **Main file:** `simple-sql-query-analyzer.php` (all PHP logic)
 -   **Frontend:** `src/dashboard/` (React + Tailwind)
 -   **Build output:** `build/dashboard.{js,css,asset.php}`
--   **REST endpoint:** `POST /wp-json/sql-analyzer/v1/analyze` (requires `manage_options`)
+-   **REST endpoint:** `POST /wp-json/simple-sql-query-analyzer/v1/analyze` (requires `manage_options`)
 
 ## Code Rules
 
